@@ -15,7 +15,7 @@ const elKanpe = document.getElementById('kanpe');
 
 // オーバレイの見た目（フォント/サイズ/色）を反映する
 function applyAppearance(overlay) {
-    const fontFamily = overlay.fontFamily || 'Segoe UI';
+    const fontFamily = overlay.fontFamily || 'Segoe UI, system-ui, -apple-system, sans-serif';
     const fontSizePx = overlay.fontSizePx || 120;
     const color = overlay.color || '#FFFFFF';
 

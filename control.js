@@ -29,7 +29,6 @@ const btnPause = document.getElementById('btnPause');
 const btnStop = document.getElementById('btnStop');
 const btnReset = document.getElementById('btnReset');
 const btnApplyTimer = document.getElementById('btnApplyTimer');
-const btnApplyOverlay = document.getElementById('btnApplyOverlay');
 const btnSendKanpe = document.getElementById('btnSendKanpe');
 const btnClearKanpe = document.getElementById('btnClearKanpe');
 
@@ -115,15 +114,59 @@ function applyOverlayToUI(overlay) {
 
     currentOverlay = overlay;
 
-    elFontFamily.value = currentOverlay.fontFamily || '';
-    elFontSize.value = currentOverlay.fontSizePx || 120; // hiddenに保持
-    elColor.value = currentOverlay.color || '#ffffff';
+    // 表示先ディスプレイ
+    if (elDisplaySelect) {
+        const id = (currentOverlay.displayId == null) ? '' : String(currentOverlay.displayId);
+        if (id !== '') {
+            elDisplaySelect.value = id;
+        }
+    }
 
+    // フォント/サイズ/色
+    if (elFontFamily) {
+        const normalizeFontFamily = (v) => {
+            const s = (v == null) ? '' : String(v);
+
+            // 旧値（例: "Segoe UI"）を新しい select の value（font stack）へ寄せる
+            if (s === 'Segoe UI') return 'Segoe UI, system-ui, -apple-system, sans-serif';
+            if (s === 'Inter') return 'Inter, system-ui, -apple-system, sans-serif';
+            if (s === 'Roboto') return 'Roboto, system-ui, -apple-system, sans-serif';
+            if (s === 'Noto Sans JP') return '"Noto Sans JP", system-ui, -apple-system, sans-serif';
+            if (s === 'Montserrat') return 'Montserrat, system-ui, -apple-system, sans-serif';
+            if (s === 'Oswald') return 'Oswald, system-ui, -apple-system, sans-serif';
+
+            return s;
+        };
+
+        const normalized = normalizeFontFamily(currentOverlay.fontFamily);
+
+        // まず state の値を UI に反映
+        if (normalized) {
+            elFontFamily.value = normalized;
+        }
+
+        // value が選択肢に存在しない場合、先頭候補へフォールバック（＝空表示を防ぐ）
+        if (!elFontFamily.value) {
+            if (elFontFamily.options && elFontFamily.options.length > 0) {
+                elFontFamily.value = elFontFamily.options[0].value;
+            }
+        }
+    }
+
+    if (elFontSize) {
+        elFontSize.value = String(currentOverlay.fontSizePx || 120);
+    }
+    if (elColor) {
+        elColor.value = currentOverlay.color || '#ffffff';
+    }
+
+    // 移動モード
     if (btnMoveMode) {
         const on = !!currentOverlay.moveMode;
         btnMoveMode.textContent = on ? '移動モード: ON' : '移動モード: OFF';
     }
 
+    // カンペ入力欄
     elKanpe.value = (typeof currentOverlay.kanpeText === 'string') ? currentOverlay.kanpeText : '';
 }
 
@@ -191,6 +234,42 @@ function registerUiEvents() {
         });
     });
 
+    // -----------------------
+    // Overlay設定（即時反映）
+    // -----------------------
+
+    // 表示先ディスプレイ：変更したら即時反映（位置は自動に戻す）
+    if (elDisplaySelect) {
+        elDisplaySelect.addEventListener('change', () => {
+            const id = parseInt(elDisplaySelect.value, 10);
+            if (!Number.isFinite(id)) return;
+
+            window.timepon.updateOverlay({
+                displayId: id,
+                x: null,
+                y: null
+            });
+        });
+    }
+
+    // フォント：変更したら即時反映
+    if (elFontFamily) {
+        elFontFamily.addEventListener('change', () => {
+            window.timepon.updateOverlay({
+                fontFamily: elFontFamily.value || 'Segoe UI'
+            });
+        });
+    }
+
+    // 色：カラーピッカーが閉じたタイミング（change）で即時反映
+    if (elColor) {
+        elColor.addEventListener('change', () => {
+            window.timepon.updateOverlay({
+                color: elColor.value || '#ffffff'
+            });
+        });
+    }
+
     // サイズ（±）は即時反映
     const FONT_SIZE_STEPS = [
         20, 30, 40, 50, 60, 70, 80, 90,
@@ -206,7 +285,7 @@ function registerUiEvents() {
     }
 
     function stepFontSize(dir) {
-        const cur = clampFontSize(elFontSize.value || 120);
+        const cur = clampFontSize(elFontSize ? elFontSize.value : 120);
         let idx = FONT_SIZE_STEPS.findIndex(v => v >= cur);
         if (idx < 0) idx = FONT_SIZE_STEPS.length - 1;
 
@@ -221,9 +300,14 @@ function registerUiEvents() {
         nextIdx = Math.max(0, Math.min(FONT_SIZE_STEPS.length - 1, nextIdx));
 
         const next = FONT_SIZE_STEPS[nextIdx];
-        elFontSize.value = String(next);
 
-        window.timepon.updateOverlay({ fontSizePx: next });
+        if (elFontSize) {
+            elFontSize.value = String(next);
+        }
+
+        window.timepon.updateOverlay({
+            fontSizePx: next
+        });
     }
 
     if (btnFontDec) {
@@ -233,16 +317,7 @@ function registerUiEvents() {
         btnFontInc.addEventListener('click', () => stepFontSize(1));
     }
 
-    // 「Overlayへ反映」はサイズ以外（表示先/フォント/色）の反映用
-    btnApplyOverlay.addEventListener('click', () => {
-        const payload = {
-            displayId: parseInt(elDisplaySelect.value, 10),
-            fontFamily: elFontFamily.value || 'Segoe UI',
-            color: elColor.value || '#ffffff'
-        };
-        window.timepon.updateOverlay(payload);
-    });
-
+    // 移動モード
     if (btnMoveMode) {
         btnMoveMode.addEventListener('click', () => {
             const next = !(currentOverlay && currentOverlay.moveMode);
@@ -250,6 +325,7 @@ function registerUiEvents() {
         });
     }
 
+    // カンペ
     btnSendKanpe.addEventListener('click', () => {
         window.timepon.setKanpe(elKanpe.value || '');
     });

@@ -56,26 +56,24 @@
                 </div>
             </div>
 
-            <div class="col">
                 <div class="card">
                     <div class="card-title">表示（Overlay）設定</div>
-
-                    <div class="row">
-                        <label>表示先ディスプレイ</label>
-                        <select id="displaySelect"></select>
-                    </div>
-
                     <div class="row">
                         <label>移動モード</label>
                         <button id="btnMoveMode" class="btn">移動モード: OFF</button>
                         <span class="small">ONの間はOverlayをドラッグして位置変更できます</span>
                     </div>
-
                     <div class="row">
                         <label>フォント</label>
-                        <input id="fontFamily" type="text" value="Segoe UI" class="w-font">
+                        <select id="fontFamily" class="w-font">
+                            <option value="Segoe UI, system-ui, -apple-system, sans-serif">Segoe UI</option>
+                            <option value="Inter, system-ui, -apple-system, sans-serif">Inter</option>
+                            <option value="Roboto, system-ui, -apple-system, sans-serif">Roboto</option>
+                            <option value="&quot;Noto Sans JP&quot;, system-ui, -apple-system, sans-serif">Noto Sans JP</option>
+                            <option value="Montserrat, system-ui, -apple-system, sans-serif">Montserrat</option>
+                            <option value="Oswald, system-ui, -apple-system, sans-serif">Oswald</option>
+                        </select>
                     </div>
-
                     <div class="row">
                         <label>サイズ</label>
                         <button id="btnFontDec" class="btn" type="button">-</button>
@@ -83,20 +81,16 @@
                         <input id="fontSize" type="hidden" value="120">
                         <span class="small">※即時反映</span>
                     </div>
-
                     <div class="row">
                         <label>色</label>
                         <input id="color" type="color" value="#ffffff">
                     </div>
-
                     <div class="row">
-                        <button id="btnApplyOverlay" class="btn btn-wide">Overlayへ反映</button>
-                    </div>
-
-                    <div class="hint">
-                        ※ Overlay は「透明・枠なし・常に最前面・クリック透過」です（操作はこのウインドウで行います）。
+                        <label>表示先ディスプレイ</label>
+                        <select id="displaySelect"></select>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

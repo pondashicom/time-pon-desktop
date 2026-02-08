@@ -60,17 +60,17 @@ const state = {
         lastTickMs: null
     },
     overlay: {
-        displayId: null,               // electron display.id
-        width: 800,
-        height: 220,
-        x: null,
-        y: null,
-        moveMode: false,
-        fontFamily: 'Segoe UI',
-        fontSizePx: 120,
-        color: '#FFFFFF',
-        kanpeText: ''
-    }
+            displayId: null,               // electron display.id
+            width: 800,
+            height: 220,
+            x: null,
+            y: null,
+            moveMode: false,
+            fontFamily: 'Segoe UI, system-ui, -apple-system, sans-serif',
+            fontSizePx: 120,
+            color: '#FFFFFF',
+            kanpeText: ''
+        }
 };
 
 // state.jsonから状態を読み込む
@@ -84,6 +84,29 @@ function loadState() {
             if (json.timer) Object.assign(state.timer, json.timer);
             if (json.overlay) Object.assign(state.overlay, json.overlay);
         }
+
+        // ----
+        // 旧値/空値の正規化（control側selectのvalueと一致させる）
+        // ----
+        const DEFAULT_FF = 'Segoe UI, system-ui, -apple-system, sans-serif';
+
+        const normalizeFontFamily = (v) => {
+            const s = (v == null) ? '' : String(v);
+
+            if (s === '') return DEFAULT_FF;
+
+            // 旧値（短い名前）→ 新値（font stack）
+            if (s === 'Segoe UI') return DEFAULT_FF;
+            if (s === 'Inter') return 'Inter, system-ui, -apple-system, sans-serif';
+            if (s === 'Roboto') return 'Roboto, system-ui, -apple-system, sans-serif';
+            if (s === 'Noto Sans JP') return '"Noto Sans JP", system-ui, -apple-system, sans-serif';
+            if (s === 'Montserrat') return 'Montserrat, system-ui, -apple-system, sans-serif';
+            if (s === 'Oswald') return 'Oswald, system-ui, -apple-system, sans-serif';
+
+            return s;
+        };
+
+        state.overlay.fontFamily = normalizeFontFamily(state.overlay.fontFamily);
     } catch (e) {
         // 読めなくても動くことを優先
     }
@@ -119,12 +142,20 @@ const OVERLAY_MARGIN_X = 24;
 const OVERLAY_MARGIN_Y = 24;
 
 // フォントサイズ(px)とカンペ文字量からOverlayウインドウの推奨サイズを算出する
-function calcOverlayAutoSize(fontSizePx, kanpeText) {
+function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily) {
     const fs = clampInt(fontSizePx, 10, 400);
     const text = (kanpeText != null) ? String(kanpeText) : '';
+    const ff = (fontFamily != null) ? String(fontFamily) : '';
 
-    // 時計（00:00:00）を基準に横幅を見積もる（Segoe UI想定の概算）
-    const TIMER_EM_WIDTH = 3.9;
+    // 時計（00:00:00）を基準に横幅を見積もる（フォントで幅が変わるので安全側に補正）
+    let TIMER_EM_WIDTH = 4.10;
+
+    if (/montserrat/i.test(ff)) TIMER_EM_WIDTH = 4.35;
+    else if (/noto\s*sans\s*jp/i.test(ff)) TIMER_EM_WIDTH = 4.25;
+    else if (/roboto/i.test(ff)) TIMER_EM_WIDTH = 4.15;
+    else if (/inter/i.test(ff)) TIMER_EM_WIDTH = 4.15;
+    else if (/oswald/i.test(ff)) TIMER_EM_WIDTH = 4.10;
+    else if (/segoe\s*ui/i.test(ff)) TIMER_EM_WIDTH = 4.10;
 
     // 余白（概算）
     const PAD_X = 48;
@@ -393,8 +424,8 @@ function createControlWindow() {
 
 // オーバレイ設定を反映し、全ウインドウへ同期して保存
 function applyOverlaySettingsAndBroadcast() {
-    // フォントサイズ＋カンペ文字量からウインドウサイズを自動算出（W×H手動指定はしない方針）
-    const auto = calcOverlayAutoSize(state.overlay.fontSizePx, state.overlay.kanpeText);
+    // フォントサイズ＋カンペ文字量＋フォントからウインドウサイズを自動算出（W×H手動指定はしない方針）
+    const auto = calcOverlayAutoSize(state.overlay.fontSizePx, state.overlay.kanpeText, state.overlay.fontFamily);
     state.overlay.width = auto.width;
     state.overlay.height = auto.height;
 
