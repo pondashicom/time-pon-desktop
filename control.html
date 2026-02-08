@@ -39,6 +39,14 @@
                     <span class="small">※秒は 0 固定（最小実装）</span>
                 </div>
                 <div class="row">
+                    <label>表示形式（DOWN）</label>
+                    <select id="downDisplayMode">
+                        <option value="hms">HH:MM:SSモード</option>
+                        <option value="mss">残りMMM分SS秒モード</option>
+                    </select>
+                    <span class="small">※カウントダウン時のみ</span>
+                </div>
+                <div class="row">
                     <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
                 </div>
             </div>
@@ -85,6 +93,11 @@
                 <div class="row">
                     <label>色</label>
                     <input id="color" type="color" value="#ffffff">
+                </div>
+                <div class="row">
+                    <label>現在時刻表示</label>
+                    <input id="showClock" type="checkbox">
+                    <span class="small">タイマー下に「現在時刻 HH:MM:SS」を表示</span>
                 </div>
                 <div class="row">
                     <label>表示先ディスプレイ</label>

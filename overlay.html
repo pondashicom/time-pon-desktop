@@ -56,7 +56,35 @@
                 0 0 12px rgba(0,0,0,0.45);
             white-space: nowrap;
         }
+        .clock {
+            font-weight: 600;
+            line-height: 1.0;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            font-size: 24px;
+            color: #ffffff;
+            text-shadow:
+                0 0 2px rgba(0,0,0,0.90),
+                0 0 6px rgba(0,0,0,0.65);
+            white-space: nowrap;
+            display: none;
+            opacity: 0.95;
+        }
+        .progress-wrap {
+            width: 98%;
+            height: 6px;
+            background: rgba(255,255,255,0.22);
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: 0 0 2px rgba(0,0,0,0.65);
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            background: rgba(255,255,255,0.85);
+        }
         .kanpe {
+
             font-weight: 600;
             line-height: 1.2;
             font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -77,6 +105,8 @@
 <body>
     <div class="root">
         <div id="timer" class="timer">00:00:00</div>
+        <div id="clock" class="clock"></div>
+        <div id="progressWrap" class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div>
         <div id="kanpe" class="kanpe"></div>
     </div>
 

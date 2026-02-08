@@ -11,6 +11,7 @@ const elTime = document.getElementById('timeText');
 
 const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
+const elDownDisplayMode = document.getElementById('downDisplayMode');
 
 const elDisplaySelect = document.getElementById('displaySelect');
 
@@ -22,6 +23,7 @@ const elFontSize = document.getElementById('fontSize');
 const btnFontDec = document.getElementById('btnFontDec');
 const btnFontInc = document.getElementById('btnFontInc');
 const elColor = document.getElementById('color');
+const elShowClock = document.getElementById('showClock');
 
 const elKanpe = document.getElementById('kanpeText');
 
@@ -337,6 +339,10 @@ function applyOverlayToUI(overlay) {
         applyControlColor(currentOverlay.color || '#ffffff');
     }
 
+    if (elShowClock) {
+        elShowClock.checked = !!currentOverlay.showClock;
+    }
+
     // 表示場所（仮想表示）を更新
     updatePlacementMarker();
 
@@ -401,9 +407,12 @@ function registerUiEvents() {
         const startMin = Math.max(0, parseInt(elStartMin.value || '0', 10));
         const startSeconds = startMin * 60;
 
+        const downDisplayMode = (elDownDisplayMode && elDownDisplayMode.value === 'mss') ? 'mss' : 'hms';
+
         window.timepon.setTimer({
             mode,
-            startSeconds
+            startSeconds,
+            downDisplayMode
         });
     });
 
@@ -443,6 +452,15 @@ function registerUiEvents() {
 
             window.timepon.updateOverlay({
                 color: elColor.value || '#ffffff'
+            });
+        });
+    }
+
+    // 現在時刻表示（タイマー下に現在時刻を表示）
+    if (elShowClock) {
+        elShowClock.addEventListener('change', () => {
+            window.timepon.updateOverlay({
+                showClock: !!elShowClock.checked
             });
         });
     }
@@ -547,10 +565,15 @@ async function init() {
         elMode.value = s.timer.mode === 'up' ? 'up' : 'down';
         elStartMin.value = Math.floor((s.timer.startSeconds || 0) / 60);
     }
+    if (s && s.timer && elDownDisplayMode) {
+        elDownDisplayMode.value = s.timer.downDisplayMode === 'mss' ? 'mss' : 'hms';
+    }
     if (s && s.overlay && s.overlay.displayId != null) {
         elDisplaySelect.value = String(s.overlay.displayId);
     }
-
+    if (s && s.overlay && elShowClock) {
+        elShowClock.checked = !!s.overlay.showClock;
+    }
     updateButtons();
 }
 

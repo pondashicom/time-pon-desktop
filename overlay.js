@@ -1,13 +1,29 @@
 // -----------------------
 //     overlay.js
-//     ver 1.0.1
+//     ver 1.0.2
 // -----------------------
 
 // -----------------------
 //   DOM参照
 // -----------------------
 const elTimer = document.getElementById('timer');
+const elClock = document.getElementById('clock');
+const elProgressWrap = document.getElementById('progressWrap');
+const elProgressBar = document.getElementById('progressBar');
 const elKanpe = document.getElementById('kanpe');
+
+// -----------------------
+//   共通関数
+// -----------------------
+function pad2(n) {
+    const x = Math.floor(Math.abs(n));
+    return (x < 10 ? '0' : '') + String(x);
+}
+
+function nowToHMS() {
+    const d = new Date();
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+}
 
 // -----------------------
 //   表示設定
@@ -26,6 +42,49 @@ function applyAppearance(overlay) {
     elKanpe.style.fontFamily = fontFamily;
     elKanpe.style.fontSize = `${Math.max(12, Math.floor(fontSizePx * 0.42))}px`;
     elKanpe.style.color = color;
+
+    if (elClock) {
+        elClock.style.fontFamily = fontFamily;
+        elClock.style.fontSize = `${Math.max(10, Math.floor(fontSizePx * 0.22))}px`;
+        elClock.style.color = color;
+    }
+
+    if (elProgressBar) {
+        elProgressBar.style.backgroundColor = color;
+        elProgressBar.style.opacity = '0.80';
+    }
+}
+
+// -----------------------
+//   追加表示（現在時刻 / プログレス）
+// -----------------------
+let clockEnabled = false;
+
+function applyClockVisibility(enabled) {
+    clockEnabled = !!enabled;
+    if (!elClock) return;
+    elClock.style.display = clockEnabled ? 'block' : 'none';
+    if (clockEnabled) {
+        elClock.textContent = `現在時刻 ${nowToHMS()}`;
+    }
+}
+
+function updateProgressFromTimer(t) {
+    if (!elProgressWrap || !elProgressBar) return;
+
+    const mode = t && t.mode ? String(t.mode) : 'down';
+    const start = t && Number.isFinite(t.startSeconds) ? t.startSeconds : 0;
+    const cur = t && Number.isFinite(t.currentSeconds) ? t.currentSeconds : 0;
+
+    // カウントダウンのみ表示（開始値0は非表示）
+    if (mode !== 'down' || start <= 0) {
+        elProgressWrap.style.display = 'none';
+        return;
+    }
+
+    const ratio = Math.max(0, Math.min(1, cur / start));
+    elProgressWrap.style.display = 'block';
+    elProgressBar.style.width = `${(ratio * 100).toFixed(3)}%`;
 }
 
 // -----------------------
@@ -37,9 +96,12 @@ function handleStateSync(payload) {
     if (payload && payload.overlay) {
         applyAppearance(payload.overlay);
         document.body.classList.toggle('move-mode', !!payload.overlay.moveMode);
+
+        applyClockVisibility(!!payload.overlay.showClock);
     }
     if (payload && payload.timer && payload.timer.timeText) {
         elTimer.textContent = payload.timer.timeText;
+        updateProgressFromTimer(payload.timer);
     }
     if (payload && payload.overlay && typeof payload.overlay.kanpeText === 'string') {
         elKanpe.textContent = payload.overlay.kanpeText;
@@ -50,6 +112,11 @@ function handleStateSync(payload) {
 function handleTimerTick(t) {
     if (t && t.timeText) {
         elTimer.textContent = t.timeText;
+    }
+    updateProgressFromTimer(t);
+
+    if (clockEnabled && elClock) {
+        elClock.textContent = `現在時刻 ${nowToHMS()}`;
     }
 }
 
@@ -67,6 +134,12 @@ function init() {
     window.timepon.onStateSync(handleStateSync);
     window.timepon.onTimerTick(handleTimerTick);
     window.timepon.onKanpeUpdate(handleKanpeUpdate);
+
+    // 現在時刻は 1秒ごとに更新（表示がONのときだけ意味がある）
+    setInterval(() => {
+        if (!clockEnabled || !elClock) return;
+        elClock.textContent = `現在時刻 ${nowToHMS()}`;
+    }, 1000);
 
     // 起動直後に state:sync を取り逃した場合でも、保存状態を必ず反映する
     window.timepon.getState()

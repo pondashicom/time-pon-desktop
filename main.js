@@ -32,6 +32,15 @@ function pad2(n) {
     return (x < 10 ? '0' : '') + String(x);
 }
 
+// 3桁ゼロ埋め文字列を作る（最小3桁。1000以上はそのまま）
+function pad3(n) {
+    const x = Math.floor(Math.abs(n));
+    if (x >= 1000) return String(x);
+    if (x >= 100) return String(x);
+    if (x >= 10) return '0' + String(x);
+    return '00' + String(x);
+}
+
 // 秒数を HH:MM:SS に変換する
 function secondsToHMS(sec) {
     const s = Math.max(0, Math.floor(sec));
@@ -39,6 +48,22 @@ function secondsToHMS(sec) {
     const mm = Math.floor((s % 3600) / 60);
     const ss = s % 60;
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+}
+
+// 秒数を MMM:SS（分が59を超えてもOK）に変換する
+function secondsToMSS(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    const mm = Math.floor(s / 60);
+    const ss = s % 60;
+    return `${pad3(mm)}:${pad2(ss)}`;
+}
+
+// タイマー表示文字列を作る
+function buildTimerText() {
+    if (state.timer.mode === 'down' && state.timer.downDisplayMode === 'mss') {
+        return secondsToMSS(state.timer.currentSeconds);
+    }
+    return secondsToHMS(state.timer.currentSeconds);
 }
 
 // -----------------------
@@ -52,6 +77,7 @@ const STATE_PATH = () => path.join(app.getPath('userData'), 'state.json');
 const state = {
     timer: {
         mode: 'down',                  // 'down' | 'up'
+        downDisplayMode: 'hms',        // 'hms' | 'mss'（downのみ）
         startSeconds: 5 * 60,          // 設定値（開始値）
         currentSecondsPrecise: 5 * 60, // 内部保持（小数OK）
         currentSeconds: 5 * 60,        // 表示用（整数）
@@ -66,6 +92,7 @@ const state = {
             x: null,
             y: null,
             moveMode: false,
+            showClock: false,
             fontFamily: 'Segoe UI, system-ui, -apple-system, sans-serif',
             fontSizePx: 120,
             color: '#FFFFFF',
@@ -85,9 +112,6 @@ function loadState() {
             if (json.overlay) Object.assign(state.overlay, json.overlay);
         }
 
-        // ----
-        // 旧値/空値の正規化（control側selectのvalueと一致させる）
-        // ----
         const DEFAULT_FF = 'Segoe UI, system-ui, -apple-system, sans-serif';
 
         const normalizeFontFamily = (v) => {
@@ -108,6 +132,10 @@ function loadState() {
 
         state.overlay.fontFamily = normalizeFontFamily(state.overlay.fontFamily);
         state.overlay.moveMode = false;
+
+        // 追加設定の正規化
+        state.overlay.showClock = !!state.overlay.showClock;
+        state.timer.downDisplayMode = (state.timer.downDisplayMode === 'mss') ? 'mss' : 'hms';
     } catch (e) {
         // 読めなくても動くことを優先
     }
@@ -143,7 +171,7 @@ const OVERLAY_MARGIN_X = 24;
 const OVERLAY_MARGIN_Y = 24;
 
 // フォントサイズ(px)とカンペ文字量からOverlayウインドウの推奨サイズを算出する
-function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily) {
+function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily, showClock, timerMode) {
     const fs = clampInt(fontSizePx, 10, 400);
     const text = (kanpeText != null) ? String(kanpeText) : '';
     const ff = (fontFamily != null) ? String(fontFamily) : '';
@@ -229,8 +257,24 @@ function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily) {
         }
     }
 
+    const baseHeight = fs + GAP + ((kanpeVisualLines > 0) ? (kanpeLineH * kanpeVisualLines) : 0) + PAD_Y;
+
+    // 追加表示（現在時刻 / プログレスバー）ぶんの高さを確保
+    let extraH = 0;
+
+    if (!!showClock) {
+        const clockSize = Math.max(10, Math.floor(fs * 0.22));
+        const clockLineH = clockSize * 1.2;
+        extraH += Math.round(clockLineH + GAP);
+    }
+
+    if (String(timerMode || '') === 'down') {
+        // progress-wrap: height=6px ＋ 余白
+        extraH += 6 + GAP;
+    }
+
     const height = clampInt(
-        Math.round(fs + GAP + ((kanpeVisualLines > 0) ? (kanpeLineH * kanpeVisualLines) : 0) + PAD_Y),
+        Math.round(baseHeight + extraH),
         80,
         2000
     );
@@ -424,7 +468,7 @@ function createControlWindow() {
 // オーバレイ設定を反映し、全ウインドウへ同期して保存
 function applyOverlaySettingsAndBroadcast() {
     // フォントサイズ＋カンペ文字量＋フォントからウインドウサイズを自動算出（W×H手動指定はしない方針）
-    const auto = calcOverlayAutoSize(state.overlay.fontSizePx, state.overlay.kanpeText, state.overlay.fontFamily);
+    const auto = calcOverlayAutoSize(state.overlay.fontSizePx, state.overlay.kanpeText, state.overlay.fontFamily, state.overlay.showClock, state.timer.mode);
     state.overlay.width = auto.width;
     state.overlay.height = auto.height;
 
@@ -456,11 +500,12 @@ function applyOverlaySettingsAndBroadcast() {
 function buildTimerPayload() {
     return {
         mode: state.timer.mode,
+        downDisplayMode: state.timer.downDisplayMode,
         startSeconds: state.timer.startSeconds,
         currentSeconds: state.timer.currentSeconds,
         running: state.timer.running,
         paused: state.timer.paused,
-        timeText: secondsToHMS(state.timer.currentSeconds)
+        timeText: buildTimerText()
     };
 }
 
@@ -559,15 +604,20 @@ function registerIpc() {
 
         const mode = (payload.mode === 'up') ? 'up' : 'down';
         const startSeconds = clampInt(payload.startSeconds, 0, 24 * 3600 - 1);
+        const downDisplayMode = (payload.downDisplayMode === 'mss') ? 'mss' : 'hms';
 
         state.timer.mode = mode;
         state.timer.startSeconds = startSeconds;
+        state.timer.downDisplayMode = downDisplayMode;
 
         // 実行中でなければ表示も合わせてリセット
         if (!state.timer.running) {
             state.timer.currentSecondsPrecise = startSeconds;
             state.timer.currentSeconds = startSeconds;
         }
+
+        // モード切替（up/down）で必要な高さが変わるため、Overlay側も反映
+        applyOverlaySettingsAndBroadcast();
 
         sendToWindows('timer:tick', buildTimerPayload());
         saveState();
@@ -612,6 +662,8 @@ function registerIpc() {
         if (payload.fontFamily != null) state.overlay.fontFamily = String(payload.fontFamily).slice(0, 128);
         if (payload.fontSizePx != null) state.overlay.fontSizePx = clampInt(payload.fontSizePx, 10, 400);
         if (payload.color != null) state.overlay.color = String(payload.color).slice(0, 64);
+
+        if ('showClock' in payload) state.overlay.showClock = !!payload.showClock;
 
         // kanpeText は別経路でも更新可能
         if (payload.kanpeText != null) state.overlay.kanpeText = String(payload.kanpeText);
