@@ -192,20 +192,29 @@ const OVERLAY_MARGIN_X = 24;
 const OVERLAY_MARGIN_Y = 24;
 
 // フォントサイズ(px)とカンペ文字量からOverlayウインドウの推奨サイズを算出する
-function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily, showClock, timerMode) {
+function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily, showClock, timerMode, timerDownDisplayMode) {
     const fs = clampInt(fontSizePx, 10, 400);
     const text = (kanpeText != null) ? String(kanpeText) : '';
     const ff = (fontFamily != null) ? String(fontFamily) : '';
 
-    // 時計（00:00:00）を基準に横幅を見積もる（フォントで幅が変わるので安全側に補正）
-    let TIMER_EM_WIDTH = 4.10;
+    // タイマー表示の横幅を見積もる（フォントで幅が変わるので安全側に補正）
+    //   hms: 00:00:00
+    //   mss: 残り000分00秒（こちらは長いので幅が必要）
+    const isMSS = (String(timerMode || '') === 'down' && String(timerDownDisplayMode || '') === 'mss');
 
-    if (/montserrat/i.test(ff)) TIMER_EM_WIDTH = 4.35;
-    else if (/noto\s*sans\s*jp/i.test(ff)) TIMER_EM_WIDTH = 4.25;
-    else if (/roboto/i.test(ff)) TIMER_EM_WIDTH = 4.15;
-    else if (/inter/i.test(ff)) TIMER_EM_WIDTH = 4.15;
-    else if (/oswald/i.test(ff)) TIMER_EM_WIDTH = 4.10;
-    else if (/segoe\s*ui/i.test(ff)) TIMER_EM_WIDTH = 4.10;
+    let TIMER_EM_WIDTH = isMSS ? 6.75 : 4.10;
+
+    // フォント差の補正倍率（hmsの基準 4.10 に対する比率を流用）
+    let TIMER_EM_MUL = 1.0;
+
+    if (/montserrat/i.test(ff)) TIMER_EM_MUL = 4.35 / 4.10;
+    else if (/noto\s*sans\s*jp/i.test(ff)) TIMER_EM_MUL = 4.25 / 4.10;
+    else if (/roboto/i.test(ff)) TIMER_EM_MUL = 4.15 / 4.10;
+    else if (/inter/i.test(ff)) TIMER_EM_MUL = 4.15 / 4.10;
+    else if (/oswald/i.test(ff)) TIMER_EM_MUL = 4.10 / 4.10;
+    else if (/segoe\s*ui/i.test(ff)) TIMER_EM_MUL = 4.10 / 4.10;
+
+    TIMER_EM_WIDTH = TIMER_EM_WIDTH * TIMER_EM_MUL;
 
     // 余白（概算）
     const PAD_X = 48;
@@ -489,7 +498,14 @@ function createControlWindow() {
 // オーバレイ設定を反映し、全ウインドウへ同期して保存
 function applyOverlaySettingsAndBroadcast() {
     // フォントサイズ＋カンペ文字量＋フォントからウインドウサイズを自動算出（W×H手動指定はしない方針）
-    const auto = calcOverlayAutoSize(state.overlay.fontSizePx, state.overlay.kanpeText, state.overlay.fontFamily, state.overlay.showClock, state.timer.mode);
+    const auto = calcOverlayAutoSize(
+        state.overlay.fontSizePx,
+        state.overlay.kanpeText,
+        state.overlay.fontFamily,
+        state.overlay.showClock,
+        state.timer.mode,
+        state.timer.downDisplayMode
+    );
     state.overlay.width = auto.width;
     state.overlay.height = auto.height;
 
