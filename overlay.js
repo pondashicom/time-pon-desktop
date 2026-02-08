@@ -36,6 +36,7 @@ function applyAppearance(overlay) {
 function handleStateSync(payload) {
     if (payload && payload.overlay) {
         applyAppearance(payload.overlay);
+        document.body.classList.toggle('move-mode', !!payload.overlay.moveMode);
     }
     if (payload && payload.timer && payload.timer.timeText) {
         elTimer.textContent = payload.timer.timeText;

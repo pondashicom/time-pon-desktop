@@ -13,6 +13,7 @@ const fs = require('fs');
 
 let controlWindow = null;
 let overlayWindow = null;
+let overlayMoveSyncTimer = null;
 
 // -----------------------
 //   共通関数
@@ -64,6 +65,7 @@ const state = {
         height: 220,
         x: null,
         y: null,
+        moveMode: false,
         fontFamily: 'Segoe UI',
         fontSizePx: 120,
         color: '#FFFFFF',
@@ -168,6 +170,20 @@ function ensureOverlayBounds() {
     return { x, y, width: w, height: h };
 }
 
+// オーバレイの「ドラッグ移動モード」を反映する
+function applyOverlayMoveMode() {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return;
+
+    const enabled = !!state.overlay.moveMode;
+
+    overlayWindow.setIgnoreMouseEvents(!enabled, { forward: true });
+    overlayWindow.setMovable(enabled);
+
+    if (typeof overlayWindow.setFocusable === 'function') {
+        overlayWindow.setFocusable(enabled);
+    }
+}
+
 // 透明オーバレイ用ウインドウ生成
 function createOverlayWindow() {
     overlayWindow = new BrowserWindow({
@@ -176,8 +192,8 @@ function createOverlayWindow() {
         transparent: true,
         frame: false,
         resizable: false,
-        movable: false,
-        focusable: false,
+        movable: !!state.overlay.moveMode,
+        focusable: !!state.overlay.moveMode,
         skipTaskbar: true,
         alwaysOnTop: true,
         hasShadow: false,
@@ -193,7 +209,20 @@ function createOverlayWindow() {
     overlayWindow.setMenuBarVisibility(false);
     overlayWindow.setAlwaysOnTop(true, 'screen-saver');
     overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+    applyOverlayMoveMode();
+
+    overlayWindow.on('move', () => {
+        if (!state.overlay.moveMode) return;
+        if (overlayMoveSyncTimer) clearTimeout(overlayMoveSyncTimer);
+        overlayMoveSyncTimer = setTimeout(() => {
+            if (!overlayWindow || overlayWindow.isDestroyed()) return;
+            const b = overlayWindow.getBounds();
+            state.overlay.x = b.x;
+            state.overlay.y = b.y;
+            sendToWindows('state:sync', { overlay: { ...state.overlay } });
+            saveState();
+        }, 80);
+    });
 
     overlayWindow.loadFile(path.join(__dirname, 'overlay.html'));
 
@@ -430,6 +459,14 @@ function registerIpc() {
         if (payload.kanpeText != null) state.overlay.kanpeText = String(payload.kanpeText);
 
         applyOverlaySettingsAndBroadcast();
+    });
+
+    ipcMain.on('overlay:move-mode', (evt, payload) => {
+        state.overlay.moveMode = !!(payload && payload.enabled);
+
+        applyOverlayMoveMode();
+        sendToWindows('state:sync', { overlay: { ...state.overlay } });
+        saveState();
     });
 
     ipcMain.on('kanpe:set', (evt, payload) => {

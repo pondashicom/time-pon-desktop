@@ -16,6 +16,15 @@
             overflow: hidden;
             user-select: none;
         }
+
+        body.move-mode {
+            outline: 2px dashed rgba(255,255,255,0.35);
+            outline-offset: -2px;
+        }
+        body.move-mode .root {
+            -webkit-app-region: drag;
+            cursor: move;
+        }
         .root {
             width: 100%;
             height: 100%;

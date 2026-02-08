@@ -14,8 +14,12 @@ const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
 
 const elDisplaySelect = document.getElementById('displaySelect');
+const elWinW = document.getElementById('winW');
+const elWinH = document.getElementById('winH');
 const elPosX = document.getElementById('posX');
 const elPosY = document.getElementById('posY');
+const btnMoveMode = document.getElementById('btnMoveMode');
+
 const elFontFamily = document.getElementById('fontFamily');
 const elFontSize = document.getElementById('fontSize');
 const elColor = document.getElementById('color');
@@ -126,6 +130,11 @@ function applyOverlayToUI(overlay) {
     elPosX.value = (currentOverlay.x == null) ? '' : String(currentOverlay.x);
     elPosY.value = (currentOverlay.y == null) ? '' : String(currentOverlay.y);
 
+    if (btnMoveMode) {
+        const on = !!currentOverlay.moveMode;
+        btnMoveMode.textContent = on ? '移動モード: ON' : '移動モード: OFF';
+    }
+
     elKanpe.value = (typeof currentOverlay.kanpeText === 'string') ? currentOverlay.kanpeText : '';
 }
 
@@ -203,16 +212,21 @@ function registerUiEvents() {
 
         const payload = {
             displayId: parseInt(elDisplaySelect.value, 10),
-            width: auto.width,
-            height: auto.height,
             x: getIntOrNull(elPosX.value),
             y: getIntOrNull(elPosY.value),
             fontFamily: elFontFamily.value || 'Segoe UI',
-            fontSizePx,
+            fontSizePx: parseInt(elFontSize.value || '120', 10),
             color: elColor.value || '#ffffff'
         };
         window.timepon.updateOverlay(payload);
     });
+
+    if (btnMoveMode) {
+        btnMoveMode.addEventListener('click', () => {
+            const next = !(currentOverlay && currentOverlay.moveMode);
+            window.timepon.setOverlayMoveMode(next);
+        });
+    }
 
     elFontSize.addEventListener('input', () => {
         const auto = calcOverlayWindowSizePx(elFontSize.value);

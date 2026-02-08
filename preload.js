@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('timepon', {
 
     //   オーバレイ/カンペ操作（send）
     updateOverlay: (payload) => ipcRenderer.send('overlay:update', payload),
+    setOverlayMoveMode: (enabled) => ipcRenderer.send('overlay:move-mode', { enabled: !!enabled }),
     setKanpe: (text) => ipcRenderer.send('kanpe:set', { text }),
 
     //   イベント購読（on）
