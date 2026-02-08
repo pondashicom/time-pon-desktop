@@ -14,14 +14,12 @@ const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
 
 const elDisplaySelect = document.getElementById('displaySelect');
-const elWinW = document.getElementById('winW');
-const elWinH = document.getElementById('winH');
-const elPosX = document.getElementById('posX');
-const elPosY = document.getElementById('posY');
 const btnMoveMode = document.getElementById('btnMoveMode');
 
 const elFontFamily = document.getElementById('fontFamily');
-const elFontSize = document.getElementById('fontSize');
+const elFontSize = document.getElementById('fontSize'); 
+const btnFontDec = document.getElementById('btnFontDec');
+const btnFontInc = document.getElementById('btnFontInc');
 const elColor = document.getElementById('color');
 
 const elKanpe = document.getElementById('kanpeText');
@@ -118,23 +116,8 @@ function applyOverlayToUI(overlay) {
     currentOverlay = overlay;
 
     elFontFamily.value = currentOverlay.fontFamily || '';
-    elFontSize.value = currentOverlay.fontSizePx || 120;
+    elFontSize.value = currentOverlay.fontSizePx || 120; // hiddenに保持
     elColor.value = currentOverlay.color || '#ffffff';
-
-    // W×H はmain側の自動算出結果を優先表示（カンペ量で可変になるため）
-    if (Number.isFinite(currentOverlay.width) && Number.isFinite(currentOverlay.height)) {
-        elWinW.value = String(currentOverlay.width);
-        elWinH.value = String(currentOverlay.height);
-    } else {
-        const auto = calcOverlayWindowSizePx(currentOverlay.fontSizePx || 120);
-        elWinW.value = auto.width;
-        elWinH.value = auto.height;
-    }
-    elWinW.disabled = true;
-    elWinH.disabled = true;
-
-    elPosX.value = (currentOverlay.x == null) ? '' : String(currentOverlay.x);
-    elPosY.value = (currentOverlay.y == null) ? '' : String(currentOverlay.y);
 
     if (btnMoveMode) {
         const on = !!currentOverlay.moveMode;
@@ -198,78 +181,73 @@ function registerUiEvents() {
     });
 
     btnApplyTimer.addEventListener('click', () => {
-        const mode = elMode.value;
-        const startMin = parseInt(elStartMin.value, 10) || 0;
-        window.timepon.setTimerConfig({ mode, startSeconds: startMin * 60 });
+        const mode = elMode.value === 'up' ? 'up' : 'down';
+        const startMin = Math.max(0, parseInt(elStartMin.value || '0', 10));
+        const startSeconds = startMin * 60;
+
+        window.timepon.setTimer({
+            mode,
+            startSeconds
+        });
     });
 
-    btnApplyOverlay.addEventListener('click', () => {
-        const payload = {
-            displayId: parseInt(elDisplaySelect.value, 10) || 0,
-            winW: parseInt(elWinW.value, 10) || 800,
-            winH: parseInt(elWinH.value, 10) || 220,
-            posX: elPosX.value === '' ? null : parseInt(elPosX.value, 10),
-            posY: elPosY.value === '' ? null : parseInt(elPosY.value, 10),
-            moveMode: !!currentOverlay.moveMode,
-            fontFamily: elFontFamily.value || 'Segoe UI',
-            fontSizePx: parseInt(elFontSize.value, 10) || 120,
-            color: elColor.value || '#ffffff'
-        };
-        window.timepon.updateOverlay(payload);
-    });
+    // サイズ（±）は即時反映
+    const FONT_SIZE_STEPS = [
+        20, 30, 40, 50, 60, 70, 80, 90,
+        100, 110, 120, 130, 140, 150, 160,
+        180, 200, 220, 240, 260, 280, 300,
+        320, 360, 400
+    ];
 
-    btnMoveMode.addEventListener('click', () => {
-        const next = !currentOverlay.moveMode;
-        currentOverlay.moveMode = next;
-        btnMoveMode.textContent = `移動モード: ${next ? 'ON' : 'OFF'}`;
-        window.timepon.setOverlayMoveMode(next);
-    });
+    function clampFontSize(n) {
+        const x = parseInt(n, 10);
+        if (!Number.isFinite(x)) return 120;
+        return Math.max(10, Math.min(400, x));
+    }
 
-    // フォントサイズは数値入力ではなく、+ / - で段階変更
-    const btnFontDec = document.getElementById('btnFontDec');
-    const btnFontInc = document.getElementById('btnFontInc');
+    function stepFontSize(dir) {
+        const cur = clampFontSize(elFontSize.value || 120);
+        let idx = FONT_SIZE_STEPS.findIndex(v => v >= cur);
+        if (idx < 0) idx = FONT_SIZE_STEPS.length - 1;
 
-    const FONT_SIZE_STEPS = [40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 180, 200, 220, 240, 260, 280, 300, 320, 360, 400];
-
-    const clampFontSizePx = (n) => {
-        const v = Number(n);
-        if (!Number.isFinite(v)) return 120;
-        return Math.max(10, Math.min(400, Math.round(v)));
-    };
-
-    const applyFontSizeToUi = (sizePx) => {
-        const px = clampFontSizePx(sizePx);
-        elFontSize.value = String(px);
-
-        const auto = calcOverlayWindowSizePx(px);
-        elWinW.value = auto.width;
-        elWinH.value = auto.height;
-    };
-
-    const stepFontSize = (dir) => {
-        const cur = clampFontSizePx(elFontSize.value);
-
-        if (dir > 0) {
-            const next = FONT_SIZE_STEPS.find(v => v > cur) ?? FONT_SIZE_STEPS[FONT_SIZE_STEPS.length - 1];
-            applyFontSizeToUi(next);
-            return;
+        // cur が段の中間の場合は「近い段」に寄せる
+        if (FONT_SIZE_STEPS[idx] !== cur && idx > 0) {
+            const prev = FONT_SIZE_STEPS[idx - 1];
+            const next = FONT_SIZE_STEPS[idx];
+            idx = (cur - prev <= next - cur) ? (idx - 1) : idx;
         }
 
-        let prev = FONT_SIZE_STEPS[0];
-        for (let i = FONT_SIZE_STEPS.length - 1; i >= 0; i -= 1) {
-            if (FONT_SIZE_STEPS[i] < cur) {
-                prev = FONT_SIZE_STEPS[i];
-                break;
-            }
-        }
-        applyFontSizeToUi(prev);
-    };
+        let nextIdx = idx + (dir > 0 ? 1 : -1);
+        nextIdx = Math.max(0, Math.min(FONT_SIZE_STEPS.length - 1, nextIdx));
+
+        const next = FONT_SIZE_STEPS[nextIdx];
+        elFontSize.value = String(next);
+
+        window.timepon.updateOverlay({ fontSizePx: next });
+    }
 
     if (btnFontDec) {
         btnFontDec.addEventListener('click', () => stepFontSize(-1));
     }
     if (btnFontInc) {
         btnFontInc.addEventListener('click', () => stepFontSize(1));
+    }
+
+    // 「Overlayへ反映」はサイズ以外（表示先/フォント/色）の反映用
+    btnApplyOverlay.addEventListener('click', () => {
+        const payload = {
+            displayId: parseInt(elDisplaySelect.value, 10),
+            fontFamily: elFontFamily.value || 'Segoe UI',
+            color: elColor.value || '#ffffff'
+        };
+        window.timepon.updateOverlay(payload);
+    });
+
+    if (btnMoveMode) {
+        btnMoveMode.addEventListener('click', () => {
+            const next = !(currentOverlay && currentOverlay.moveMode);
+            window.timepon.setOverlayMoveMode(next);
+        });
     }
 
     btnSendKanpe.addEventListener('click', () => {

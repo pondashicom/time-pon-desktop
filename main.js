@@ -7,7 +7,7 @@
 // -----------------------
 //    初期設定
 // -----------------------
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -245,6 +245,56 @@ function applyOverlayMoveMode() {
     }
 }
 
+// アプリメニュー（操作ウインドウ用）
+function setupAppMenu() {
+    const template = [
+        ...(process.platform === 'darwin' ? [{
+            label: app.name,
+            submenu: [
+                { role: 'about' },
+                { type: 'separator' },
+                { role: 'services' },
+                { type: 'separator' },
+                { role: 'hide' },
+                { role: 'hideOthers' },
+                { role: 'unhide' },
+                { type: 'separator' },
+                { role: 'quit' }
+            ]
+        }] : []),
+
+        {
+            label: 'File',
+            submenu: [
+                ...(process.platform === 'darwin'
+                    ? [{ role: 'close' }]
+                    : [{ role: 'quit' }]
+                )
+            ]
+        },
+        {
+            label: 'View',
+            submenu: [
+                { role: 'reload' },
+                { role: 'forceReload' },
+                { type: 'separator' },
+                { role: 'toggleDevTools' }
+            ]
+        },
+        {
+            label: 'Window',
+            submenu: [
+                { role: 'minimize' },
+                ...(process.platform === 'darwin' ? [{ role: 'zoom' }] : []),
+                { role: 'close' }
+            ]
+        }
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
 // 透明オーバレイ用ウインドウ生成
 function createOverlayWindow() {
     overlayWindow = new BrowserWindow({
@@ -312,8 +362,17 @@ function createControlWindow() {
     // 常に 16:9 を維持
     controlWindow.setAspectRatio(16 / 9);
 
-    controlWindow.setMenuBarVisibility(false);
+    // 操作ウインドウはメニューを表示
+    controlWindow.setMenuBarVisibility(true);
     controlWindow.loadFile(path.join(__dirname, 'control.html'));
+
+    // 開発中だけ DevTools を自動で開きたい場合：TIMEPON_DEBUG=1
+    if (process.env.TIMEPON_DEBUG === '1') {
+        controlWindow.webContents.once('did-finish-load', () => {
+            if (!controlWindow || controlWindow.isDestroyed()) return;
+            controlWindow.webContents.openDevTools({ mode: 'detach' });
+        });
+    }
 
     controlWindow.on('closed', () => {
         controlWindow = null;
@@ -548,6 +607,8 @@ function registerIpc() {
 // 初期化完了後の起動処理
 app.whenReady().then(() => {
     loadState();
+
+    setupAppMenu();
 
     createOverlayWindow();
     createControlWindow();
