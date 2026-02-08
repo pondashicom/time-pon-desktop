@@ -8,7 +8,6 @@
 //   DOM参照
 // -----------------------
 const elTime = document.getElementById('timeText');
-const elState = document.getElementById('stateText');
 
 const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
@@ -26,12 +25,10 @@ const elKanpe = document.getElementById('kanpeText');
 
 const btnStart = document.getElementById('btnStart');
 const btnPause = document.getElementById('btnPause');
-const btnStop = document.getElementById('btnStop');
 const btnReset = document.getElementById('btnReset');
 const btnApplyTimer = document.getElementById('btnApplyTimer');
 const btnSendKanpe = document.getElementById('btnSendKanpe');
 const btnClearKanpe = document.getElementById('btnClearKanpe');
-
 
 // -----------------------
 //   状態（Renderer側保持）
@@ -45,11 +42,6 @@ let displays = [];
 //   共通関数
 // -----------------------
 
-// 状態テキストを表示する
-function setStateText(t) {
-    elState.textContent = t;
-}
-
 // タイマー状態に応じてボタンの有効/無効を更新する
 function updateButtons() {
     if (!currentTimer) return;
@@ -59,8 +51,23 @@ function updateButtons() {
 
     btnStart.disabled = running && !paused;
     btnPause.disabled = !running || paused;
-    btnStop.disabled = !running;
     btnReset.disabled = running && !paused;
+}
+
+// タイマー状態に応じて「点滅表示」を更新する
+function updateBlinking(timer) {
+    if (!btnStart || !btnPause) return;
+
+    btnStart.classList.remove('blink-running');
+    btnPause.classList.remove('blink-paused');
+
+    if (!timer || !timer.running) return;
+
+    if (timer.paused) {
+        btnPause.classList.add('blink-paused');
+    } else {
+        btnStart.classList.add('blink-running');
+    }
 }
 
 // 数値入力を「整数 or null」に変換する（空欄はnull）
@@ -90,22 +97,15 @@ function calcOverlayWindowSizePx(fontSizePx) {
     return { width, height };
 }
 
-// タイマー状態に応じた表示（時刻/状態）を反映する
+// タイマー状態に応じた表示（時刻）を反映する
 function applyTimerToUI(timer) {
     if (!timer) return;
 
     currentTimer = timer;
     elTime.textContent = timer.timeText || '00:00:00';
 
-    if (!timer.running) {
-        setStateText('停止');
-    } else if (timer.paused) {
-        setStateText('一時停止');
-    } else {
-        setStateText('実行中');
-    }
-
     updateButtons();
+    updateBlinking(timer);
 }
 
 // オーバレイ設定をUIへ反映する
@@ -213,10 +213,6 @@ function registerUiEvents() {
 
     btnPause.addEventListener('click', () => {
         window.timepon.timerControl('pause');
-    });
-
-    btnStop.addEventListener('click', () => {
-        window.timepon.timerControl('stop');
     });
 
     btnReset.addEventListener('click', () => {
