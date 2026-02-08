@@ -113,26 +113,87 @@ function sendToWindows(channel, payload) {
     }
 }
 
+// フォントサイズ(px)とカンペ文字量からOverlayウインドウの推奨サイズを算出する
 //   Overlay 自動サイズ/配置
 const OVERLAY_MARGIN_X = 24;
 const OVERLAY_MARGIN_Y = 24;
 
-// フォントサイズ(px)からOverlayウインドウの推奨サイズを算出する
-function calcOverlayAutoSize(fontSizePx) {
+// フォントサイズ(px)とカンペ文字量からOverlayウインドウの推奨サイズを算出する
+function calcOverlayAutoSize(fontSizePx, kanpeText) {
     const fs = clampInt(fontSizePx, 10, 400);
+    const text = (kanpeText != null) ? String(kanpeText) : '';
 
     // 時計（00:00:00）を基準に横幅を見積もる（Segoe UI想定の概算）
     const TIMER_EM_WIDTH = 3.9;
-    const PAD_X = 48;
 
-    // カンペは2行ぶん確保（空の場合は余白として吸収される）
-    const KANPE_LINES = 2;
+    // 余白（概算）
+    const PAD_X = 48;
     const GAP = 8;
     const PAD_Y = 24;
 
     const kanpeSize = Math.max(12, Math.floor(fs * 0.42));
-    const width = clampInt(Math.round(fs * TIMER_EM_WIDTH + PAD_X), 200, 4000);
-    const height = clampInt(Math.round(fs + GAP + (kanpeSize * 1.2 * KANPE_LINES) + PAD_Y), 80, 2000);
+    const kanpeLineH = kanpeSize * 1.2;
+
+    // 1文字あたりの幅(em)をざっくり見積もる（CJK=1.0 / ASCII=0.55 / space=0.30）
+    const estimateEm = (s) => {
+        let em = 0;
+        for (const ch of String(s)) {
+            if (ch === ' ' || ch === '\t') {
+                em += 0.30;
+            } else {
+                const code = ch.codePointAt(0);
+                if (code != null && code <= 0x007f) {
+                    // ASCII
+                    em += 0.55;
+                } else {
+                    // CJKなど幅広
+                    em += 1.00;
+                }
+            }
+        }
+        return em;
+    };
+
+    // タイマーの必要幅(px)
+    const timerWidthPx = fs * TIMER_EM_WIDTH;
+
+    // カンペの必要幅(px)（最長行ベース）
+    let kanpeMaxLinePx = 0;
+    let kanpeVisualLines = 0;
+
+    if (text !== '') {
+        const rawLines = text.split(/\r?\n/);
+
+        // まず最長行幅を推定
+        for (const line of rawLines) {
+            const linePx = estimateEm(line) * kanpeSize;
+            kanpeMaxLinePx = Math.max(kanpeMaxLinePx, linePx);
+        }
+
+        // 幅を決めたあとに折り返し行数を推定する
+        // ※ width は後段で確定するので、ここでは一旦ダミー（後段で再計算）
+    }
+
+    // 幅は「タイマー vs カンペ最長行」の大きい方を採用（上限は安全のためclamp）
+    let width = clampInt(Math.round(Math.max(timerWidthPx, kanpeMaxLinePx) + PAD_X), 200, 4000);
+
+    // 折り返し行数（幅確定後）
+    if (text !== '') {
+        const innerW = Math.max(1, width - PAD_X);
+        const rawLines = text.split(/\r?\n/);
+
+        for (const line of rawLines) {
+            const linePx = estimateEm(line) * kanpeSize;
+            const wraps = Math.max(1, Math.ceil(linePx / innerW));
+            kanpeVisualLines += wraps;
+        }
+    }
+
+    const height = clampInt(
+        Math.round(fs + GAP + ((kanpeVisualLines > 0) ? (kanpeLineH * kanpeVisualLines) : 0) + PAD_Y),
+        80,
+        2000
+    );
 
     return { width, height };
 }
@@ -265,8 +326,8 @@ function createControlWindow() {
 
 // オーバレイ設定を反映し、全ウインドウへ同期して保存
 function applyOverlaySettingsAndBroadcast() {
-    // フォントサイズからウインドウサイズを自動算出（W×H手動指定はしない方針）
-    const auto = calcOverlayAutoSize(state.overlay.fontSizePx);
+    // フォントサイズ＋カンペ文字量からウインドウサイズを自動算出（W×H手動指定はしない方針）
+    const auto = calcOverlayAutoSize(state.overlay.fontSizePx, state.overlay.kanpeText);
     state.overlay.width = auto.width;
     state.overlay.height = auto.height;
 
@@ -471,8 +532,12 @@ function registerIpc() {
 
     ipcMain.on('kanpe:set', (evt, payload) => {
         state.overlay.kanpeText = payload && payload.text != null ? String(payload.text) : '';
+
+        // カンペ文字量込みでOverlayサイズを再計算・反映
+        applyOverlaySettingsAndBroadcast();
+
+        // 既存の購読先互換のため、kanpe:update も送る
         sendToWindows('kanpe:update', { text: state.overlay.kanpeText });
-        saveState();
     });
 }
 

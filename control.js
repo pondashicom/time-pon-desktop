@@ -121,12 +121,18 @@ function applyOverlayToUI(overlay) {
     elFontSize.value = currentOverlay.fontSizePx || 120;
     elColor.value = currentOverlay.color || '#ffffff';
 
-    // W×H はフォントサイズから自動算出（手動調整しない方針）
-    const auto = calcOverlayWindowSizePx(currentOverlay.fontSizePx || 120);
-    elWinW.value = auto.width;
-    elWinH.value = auto.height;
+    // W×H はmain側の自動算出結果を優先表示（カンペ量で可変になるため）
+    if (Number.isFinite(currentOverlay.width) && Number.isFinite(currentOverlay.height)) {
+        elWinW.value = String(currentOverlay.width);
+        elWinH.value = String(currentOverlay.height);
+    } else {
+        const auto = calcOverlayWindowSizePx(currentOverlay.fontSizePx || 120);
+        elWinW.value = auto.width;
+        elWinH.value = auto.height;
+    }
     elWinW.disabled = true;
     elWinH.disabled = true;
+
     elPosX.value = (currentOverlay.x == null) ? '' : String(currentOverlay.x);
     elPosY.value = (currentOverlay.y == null) ? '' : String(currentOverlay.y);
 
