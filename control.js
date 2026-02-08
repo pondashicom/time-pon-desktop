@@ -192,47 +192,79 @@ function registerUiEvents() {
     });
 
     btnApplyTimer.addEventListener('click', () => {
-        const mode = elMode.value === 'up' ? 'up' : 'down';
-        const startMin = Math.max(0, parseInt(elStartMin.value || '0', 10));
-        const startSeconds = startMin * 60;
-
-        window.timepon.setTimer({
-            mode,
-            startSeconds
-        });
+        const mode = elMode.value;
+        const startMin = parseInt(elStartMin.value, 10) || 0;
+        window.timepon.setTimerConfig({ mode, startSeconds: startMin * 60 });
     });
 
     btnApplyOverlay.addEventListener('click', () => {
-        const fontSizePx = parseInt(elFontSize.value || '120', 10);
-        const auto = calcOverlayWindowSizePx(fontSizePx);
-
-        // UI上のW×H表示も更新（見えないOverlayの調整を数値で把握できるようにする）
-        elWinW.value = auto.width;
-        elWinH.value = auto.height;
-
         const payload = {
-            displayId: parseInt(elDisplaySelect.value, 10),
-            x: getIntOrNull(elPosX.value),
-            y: getIntOrNull(elPosY.value),
+            displayId: parseInt(elDisplaySelect.value, 10) || 0,
+            winW: parseInt(elWinW.value, 10) || 800,
+            winH: parseInt(elWinH.value, 10) || 220,
+            posX: elPosX.value === '' ? null : parseInt(elPosX.value, 10),
+            posY: elPosY.value === '' ? null : parseInt(elPosY.value, 10),
+            moveMode: !!currentOverlay.moveMode,
             fontFamily: elFontFamily.value || 'Segoe UI',
-            fontSizePx: parseInt(elFontSize.value || '120', 10),
+            fontSizePx: parseInt(elFontSize.value, 10) || 120,
             color: elColor.value || '#ffffff'
         };
         window.timepon.updateOverlay(payload);
     });
 
-    if (btnMoveMode) {
-        btnMoveMode.addEventListener('click', () => {
-            const next = !(currentOverlay && currentOverlay.moveMode);
-            window.timepon.setOverlayMoveMode(next);
-        });
-    }
+    btnMoveMode.addEventListener('click', () => {
+        const next = !currentOverlay.moveMode;
+        currentOverlay.moveMode = next;
+        btnMoveMode.textContent = `移動モード: ${next ? 'ON' : 'OFF'}`;
+        window.timepon.setOverlayMoveMode(next);
+    });
 
-    elFontSize.addEventListener('input', () => {
-        const auto = calcOverlayWindowSizePx(elFontSize.value);
+    // フォントサイズは数値入力ではなく、+ / - で段階変更
+    const btnFontDec = document.getElementById('btnFontDec');
+    const btnFontInc = document.getElementById('btnFontInc');
+
+    const FONT_SIZE_STEPS = [40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 180, 200, 220, 240, 260, 280, 300, 320, 360, 400];
+
+    const clampFontSizePx = (n) => {
+        const v = Number(n);
+        if (!Number.isFinite(v)) return 120;
+        return Math.max(10, Math.min(400, Math.round(v)));
+    };
+
+    const applyFontSizeToUi = (sizePx) => {
+        const px = clampFontSizePx(sizePx);
+        elFontSize.value = String(px);
+
+        const auto = calcOverlayWindowSizePx(px);
         elWinW.value = auto.width;
         elWinH.value = auto.height;
-    });
+    };
+
+    const stepFontSize = (dir) => {
+        const cur = clampFontSizePx(elFontSize.value);
+
+        if (dir > 0) {
+            const next = FONT_SIZE_STEPS.find(v => v > cur) ?? FONT_SIZE_STEPS[FONT_SIZE_STEPS.length - 1];
+            applyFontSizeToUi(next);
+            return;
+        }
+
+        let prev = FONT_SIZE_STEPS[0];
+        for (let i = FONT_SIZE_STEPS.length - 1; i >= 0; i -= 1) {
+            if (FONT_SIZE_STEPS[i] < cur) {
+                prev = FONT_SIZE_STEPS[i];
+                break;
+            }
+        }
+        applyFontSizeToUi(prev);
+    };
+
+    if (btnFontDec) {
+        btnFontDec.addEventListener('click', () => stepFontSize(-1));
+    }
+    if (btnFontInc) {
+        btnFontInc.addEventListener('click', () => stepFontSize(1));
+    }
 
     btnSendKanpe.addEventListener('click', () => {
         window.timepon.setKanpe(elKanpe.value || '');
@@ -243,7 +275,6 @@ function registerUiEvents() {
         window.timepon.setKanpe('');
     });
 }
-
 
 // -----------------------
 //   IPC受信（Renderer API）
