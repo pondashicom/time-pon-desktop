@@ -117,16 +117,12 @@ function applyOverlayToUI(overlay) {
     elFontSize.value = currentOverlay.fontSizePx || 120;
     elColor.value = currentOverlay.color || '#ffffff';
 
-<<<<<<< HEAD
     // W×H はフォントサイズから自動算出（手動調整しない方針）
     const auto = calcOverlayWindowSizePx(currentOverlay.fontSizePx || 120);
     elWinW.value = auto.width;
     elWinH.value = auto.height;
     elWinW.disabled = true;
     elWinH.disabled = true;
-
-=======
->>>>>>> 4b13667 (Refactor(overlay): remove window size controls and width/height IPC)
     elPosX.value = (currentOverlay.x == null) ? '' : String(currentOverlay.x);
     elPosY.value = (currentOverlay.y == null) ? '' : String(currentOverlay.y);
 
@@ -207,11 +203,8 @@ function registerUiEvents() {
 
         const payload = {
             displayId: parseInt(elDisplaySelect.value, 10),
-<<<<<<< HEAD
             width: auto.width,
             height: auto.height,
-=======
->>>>>>> 4b13667 (Refactor(overlay): remove window size controls and width/height IPC)
             x: getIntOrNull(elPosX.value),
             y: getIntOrNull(elPosY.value),
             fontFamily: elFontFamily.value || 'Segoe UI',
