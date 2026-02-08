@@ -1,3 +1,12 @@
+// -----------------------
+//     main.js
+//     ver 1.0.1
+// -----------------------
+
+
+// -----------------------
+//    初期設定
+// -----------------------
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -5,20 +14,52 @@ const fs = require('fs');
 let controlWindow = null;
 let overlayWindow = null;
 
+// -----------------------
+//   共通関数
+// -----------------------
+
+// 数値を整数として範囲内に丸める
+function clampInt(n, min, max) {
+    const x = Number.isFinite(n) ? n : parseInt(n, 10);
+    if (!Number.isFinite(x)) return min;
+    return Math.max(min, Math.min(max, Math.floor(x)));
+}
+
+// 2桁ゼロ埋め文字列を作る
+function pad2(n) {
+    const x = Math.floor(Math.abs(n));
+    return (x < 10 ? '0' : '') + String(x);
+}
+
+// 秒数を HH:MM:SS に変換する
+function secondsToHMS(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    const hh = Math.floor(s / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+}
+
+// -----------------------
+//   状態管理
+// -----------------------
+
+// 状態管理用パス生成
 const STATE_PATH = () => path.join(app.getPath('userData'), 'state.json');
 
+// 状態を保持するための初期データ
 const state = {
     timer: {
-        mode: 'down',                // 'down' | 'up'
-        startSeconds: 5 * 60,        // 設定値（開始値）
+        mode: 'down',                  // 'down' | 'up'
+        startSeconds: 5 * 60,          // 設定値（開始値）
         currentSecondsPrecise: 5 * 60, // 内部保持（小数OK）
-        currentSeconds: 5 * 60,      // 表示用（整数）
+        currentSeconds: 5 * 60,        // 表示用（整数）
         running: false,
         paused: false,
         lastTickMs: null
     },
     overlay: {
-        displayId: null,             // electron display.id
+        displayId: null,               // electron display.id
         width: 800,
         height: 220,
         x: null,
@@ -30,25 +71,7 @@ const state = {
     }
 };
 
-function clampInt(n, min, max) {
-    const x = Number.isFinite(n) ? n : parseInt(n, 10);
-    if (!Number.isFinite(x)) return min;
-    return Math.max(min, Math.min(max, Math.floor(x)));
-}
-
-function pad2(n) {
-    const x = Math.floor(Math.abs(n));
-    return (x < 10 ? '0' : '') + String(x);
-}
-
-function secondsToHMS(sec) {
-    const s = Math.max(0, Math.floor(sec));
-    const hh = Math.floor(s / 3600);
-    const mm = Math.floor((s % 3600) / 60);
-    const ss = s % 60;
-    return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
-}
-
+// state.jsonから状態を読み込む
 function loadState() {
     try {
         const p = STATE_PATH();
@@ -64,6 +87,7 @@ function loadState() {
     }
 }
 
+// state.jsonへ状態を保存
 function saveState() {
     try {
         const p = STATE_PATH();
@@ -73,6 +97,11 @@ function saveState() {
     }
 }
 
+// -----------------------
+//   ウインドウ・表示
+// -----------------------
+
+// control/overlay両ウインドウへIPC送信する
 function sendToWindows(channel, payload) {
     if (controlWindow && !controlWindow.isDestroyed()) {
         controlWindow.webContents.send(channel, payload);
@@ -82,17 +111,7 @@ function sendToWindows(channel, payload) {
     }
 }
 
-function buildTimerPayload() {
-    return {
-        mode: state.timer.mode,
-        startSeconds: state.timer.startSeconds,
-        currentSeconds: state.timer.currentSeconds,
-        running: state.timer.running,
-        paused: state.timer.paused,
-        timeText: secondsToHMS(state.timer.currentSeconds)
-    };
-}
-
+// オーバレイ表示位置/サイズを画面内に収める
 function ensureOverlayBounds() {
     const displays = screen.getAllDisplays();
 
@@ -125,6 +144,7 @@ function ensureOverlayBounds() {
     return { x, y, width: w, height: h };
 }
 
+// 透明オーバレイ用ウインドウ生成
 function createOverlayWindow() {
     overlayWindow = new BrowserWindow({
         width: state.overlay.width,
@@ -158,6 +178,7 @@ function createOverlayWindow() {
     });
 }
 
+// 操作用コントロールウインドウ生成
 function createControlWindow() {
     controlWindow = new BrowserWindow({
         width: 520,
@@ -184,6 +205,7 @@ function createControlWindow() {
     });
 }
 
+// オーバレイ設定を反映し、全ウインドウへ同期して保存
 function applyOverlaySettingsAndBroadcast() {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
         const b = ensureOverlayBounds();
@@ -205,6 +227,23 @@ function applyOverlaySettingsAndBroadcast() {
     saveState();
 }
 
+// -----------------------
+//   タイマー制御
+// -----------------------
+
+// タイマー状態を送信用payloadにまとめる
+function buildTimerPayload() {
+    return {
+        mode: state.timer.mode,
+        startSeconds: state.timer.startSeconds,
+        currentSeconds: state.timer.currentSeconds,
+        running: state.timer.running,
+        paused: state.timer.paused,
+        timeText: secondsToHMS(state.timer.currentSeconds)
+    };
+}
+
+// タイマーを開始値リセット
 function timerResetToStart() {
     state.timer.currentSecondsPrecise = state.timer.startSeconds;
     state.timer.currentSeconds = state.timer.startSeconds;
@@ -213,6 +252,7 @@ function timerResetToStart() {
     state.timer.lastTickMs = null;
 }
 
+// タイマーを開始（再開）
 function timerStart() {
     if (state.timer.running && !state.timer.paused) return;
     state.timer.running = true;
@@ -220,18 +260,21 @@ function timerStart() {
     state.timer.lastTickMs = Date.now();
 }
 
+// タイマーを一時停止
 function timerPause() {
     if (!state.timer.running) return;
     state.timer.paused = true;
     state.timer.lastTickMs = null;
 }
 
+// タイマーを停止
 function timerStop() {
     state.timer.running = false;
     state.timer.paused = false;
     state.timer.lastTickMs = null;
 }
 
+// タイマーを進めて表示を更新
 function timerTick() {
     if (!state.timer.running) return;
     if (state.timer.paused) return;
@@ -267,6 +310,11 @@ function timerTick() {
     sendToWindows('timer:tick', buildTimerPayload());
 }
 
+// -----------------------
+//   IPC
+// -----------------------
+
+// IPCハンドラ/イベント受信を登録
 function registerIpc() {
     ipcMain.handle('displays:get', () => {
         return screen.getAllDisplays().map(d => ({
@@ -360,6 +408,11 @@ function registerIpc() {
     });
 }
 
+// -----------------------
+//   アプリ開始・終了処理
+// -----------------------
+
+// 初期化完了後の起動処理
 app.whenReady().then(() => {
     loadState();
 
@@ -376,6 +429,7 @@ app.whenReady().then(() => {
     setInterval(timerTick, 200);
 });
 
+// 全ウインドウが閉じたとき（mac以外は終了）
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
