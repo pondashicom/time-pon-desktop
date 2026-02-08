@@ -55,10 +55,15 @@
             <div class="card">
                 <div class="card-title">表示（Overlay）設定</div>
                 <div class="row">
-                    <label>移動モード</label>
-                    <button id="btnMoveMode" class="btn">移動モード: OFF</button>
-                    <span class="small">ONの間はOverlayをドラッグして位置変更できます</span>
+                    <label>表示場所</label>
+                    <div class="placement-wrap">
+                        <div id="placementArea" class="placement-area">
+                            <div id="placementMarker" class="placement-marker" title="ドラッグして位置変更"></div>
+                        </div>
+                        <div class="hint">※ドラッグでOverlayの位置（左上）を変更します（16:9の仮想表示）</div>
+                    </div>
                 </div>
+
                 <div class="row">
                     <label>フォント</label>
                     <select id="fontFamily" class="w-font">

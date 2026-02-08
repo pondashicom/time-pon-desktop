@@ -107,6 +107,7 @@ function loadState() {
         };
 
         state.overlay.fontFamily = normalizeFontFamily(state.overlay.fontFamily);
+        state.overlay.moveMode = false;
     } catch (e) {
         // 読めなくても動くことを優先
     }

@@ -13,7 +13,9 @@ const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
 
 const elDisplaySelect = document.getElementById('displaySelect');
-const btnMoveMode = document.getElementById('btnMoveMode');
+
+const elPlacementArea = document.getElementById('placementArea');
+const elPlacementMarker = document.getElementById('placementMarker');
 
 const elFontFamily = document.getElementById('fontFamily');
 const elFontSize = document.getElementById('fontSize'); 
@@ -110,6 +112,165 @@ function calcOverlayWindowSizePx(fontSizePx) {
     return { width, height };
 }
 
+
+// 表示場所（仮想 16:9）でOverlay位置を調整する
+let placementDrag = {
+    active: false,
+    offsetX: 0,
+    offsetY: 0,
+    raf: 0,
+    pending: null
+};
+
+function getCurrentWorkArea() {
+    const id = currentOverlay && currentOverlay.displayId != null ? currentOverlay.displayId : null;
+    let d = null;
+
+    if (id != null && Array.isArray(displays)) {
+        d = displays.find(x => x && x.id === id) || null;
+    }
+    if (!d && Array.isArray(displays) && displays.length > 0) {
+        d = displays[0];
+    }
+
+    if (d && d.workArea) return d.workArea;
+
+    // fallback（例外時）
+    return { x: 0, y: 0, width: 1920, height: 1080 };
+}
+
+function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+}
+
+function scheduleOverlayPositionUpdate(x, y) {
+    placementDrag.pending = { x, y };
+
+    if (placementDrag.raf) return;
+
+    placementDrag.raf = window.requestAnimationFrame(() => {
+        placementDrag.raf = 0;
+        const p = placementDrag.pending;
+        placementDrag.pending = null;
+        if (!p) return;
+
+        window.timepon.updateOverlay({ x: p.x, y: p.y });
+    });
+}
+
+function updatePlacementMarker() {
+    if (!elPlacementArea || !elPlacementMarker) return;
+    if (!currentOverlay) return;
+
+    // 実表示サイズ（16:9 の内側）として扱う
+    const areaRect = elPlacementArea.getBoundingClientRect();
+    const innerW = Math.max(1, areaRect.width);
+    const innerH = Math.max(1, Math.round(innerW * 9 / 16));
+
+    const wa = getCurrentWorkArea();
+
+    const overlayW = Math.max(1, parseInt(currentOverlay.width || 0, 10) || 1);
+    const overlayH = Math.max(1, parseInt(currentOverlay.height || 0, 10) || 1);
+
+    let x = currentOverlay.x;
+    let y = currentOverlay.y;
+
+    const mw = Math.max(12, Math.round(innerW * (overlayW / wa.width)));
+    const mh = Math.max(10, Math.round(innerH * (overlayH / wa.height)));
+
+    // 自動配置（null）の場合は「右上寄せ（見た目だけ）」で表示
+    if (x == null || y == null) {
+        const margin = 18;
+        elPlacementMarker.style.width = `${clamp(mw, 12, innerW)}px`;
+        elPlacementMarker.style.height = `${clamp(mh, 10, innerH)}px`;
+        elPlacementMarker.style.left = `${Math.max(0, innerW - mw - margin)}px`;
+        elPlacementMarker.style.top = `${margin}px`;
+        return;
+    }
+
+    // 位置は workArea 基準の比率で 16:9 box に写す
+    const relX = (x - wa.x) / wa.width;
+    const relY = (y - wa.y) / wa.height;
+
+    const left = Math.round(relX * innerW);
+    const top = Math.round(relY * innerH);
+
+    // 画面外はみ出し抑制（見た目）
+    const cl = clamp(left, 0, Math.max(0, innerW - mw));
+    const ct = clamp(top, 0, Math.max(0, innerH - mh));
+
+    elPlacementMarker.style.width = `${clamp(mw, 12, innerW)}px`;
+    elPlacementMarker.style.height = `${clamp(mh, 10, innerH)}px`;
+    elPlacementMarker.style.left = `${cl}px`;
+    elPlacementMarker.style.top = `${ct}px`;
+}
+
+function registerPlacementEvents() {
+    if (!elPlacementArea || !elPlacementMarker) return;
+
+    const startDrag = (ev) => {
+        if (!currentOverlay) return;
+        ev.preventDefault();
+
+        const areaRect = elPlacementArea.getBoundingClientRect();
+        const innerW = Math.max(1, areaRect.width);
+        const innerH = Math.max(1, Math.round(innerW * 9 / 16));
+
+        const markerRect = elPlacementMarker.getBoundingClientRect();
+
+        placementDrag.active = true;
+        placementDrag.offsetX = ev.clientX - markerRect.left;
+        placementDrag.offsetY = ev.clientY - markerRect.top;
+
+        const move = (e) => {
+            if (!placementDrag.active) return;
+
+            const wa = getCurrentWorkArea();
+
+            const overlayW = Math.max(1, parseInt(currentOverlay.width || 0, 10) || 1);
+            const overlayH = Math.max(1, parseInt(currentOverlay.height || 0, 10) || 1);
+
+            const mw = Math.max(12, Math.round(innerW * (overlayW / wa.width)));
+            const mh = Math.max(10, Math.round(innerH * (overlayH / wa.height)));
+
+            const rawLeft = (e.clientX - areaRect.left) - placementDrag.offsetX;
+            const rawTop = (e.clientY - areaRect.top) - placementDrag.offsetY;
+
+            const left = clamp(rawLeft, 0, Math.max(0, innerW - mw));
+            const top = clamp(rawTop, 0, Math.max(0, innerH - mh));
+
+            elPlacementMarker.style.left = `${Math.round(left)}px`;
+            elPlacementMarker.style.top = `${Math.round(top)}px`;
+
+            // 実座標へ変換（Overlayは left/top=workArea基準の左上）
+            const relX = left / innerW;
+            const relY = top / innerH;
+
+            let nx = Math.round(wa.x + relX * wa.width);
+            let ny = Math.round(wa.y + relY * wa.height);
+
+            // はみ出し抑制（実座標）
+            nx = clamp(nx, wa.x, wa.x + wa.width - overlayW);
+            ny = clamp(ny, wa.y, wa.y + wa.height - overlayH);
+
+            scheduleOverlayPositionUpdate(nx, ny);
+        };
+
+        const end = () => {
+            placementDrag.active = false;
+            window.removeEventListener('mousemove', move);
+            window.removeEventListener('mouseup', end);
+        };
+
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+    };
+
+    elPlacementMarker.addEventListener('mousedown', startDrag);
+}
+
+// タイマー状態に応じた表示（時刻）を反映する
+
 // タイマー状態に応じた表示（時刻）を反映する
 function applyTimerToUI(timer) {
     if (!timer) return;
@@ -176,11 +337,8 @@ function applyOverlayToUI(overlay) {
         applyControlColor(currentOverlay.color || '#ffffff');
     }
 
-    // 移動モード
-    if (btnMoveMode) {
-        const on = !!currentOverlay.moveMode;
-        btnMoveMode.textContent = on ? '移動モード: ON' : '移動モード: OFF';
-    }
+    // 表示場所（仮想表示）を更新
+    updatePlacementMarker();
 
     // カンペ入力欄
     elKanpe.value = (typeof currentOverlay.kanpeText === 'string') ? currentOverlay.kanpeText : '';
@@ -214,6 +372,9 @@ function populateDisplays(list) {
     if (currentOverlay && currentOverlay.displayId != null) {
         elDisplaySelect.value = String(currentOverlay.displayId);
     }
+
+    // 表示場所（仮想表示）を更新
+    updatePlacementMarker();
 }
 
 
@@ -245,6 +406,8 @@ function registerUiEvents() {
             startSeconds
         });
     });
+
+    registerPlacementEvents();
 
     // -----------------------
     // Overlay設定（即時反映）
@@ -329,14 +492,6 @@ function registerUiEvents() {
     }
     if (btnFontInc) {
         btnFontInc.addEventListener('click', () => stepFontSize(1));
-    }
-
-    // 移動モード
-    if (btnMoveMode) {
-        btnMoveMode.addEventListener('click', () => {
-            const next = !(currentOverlay && currentOverlay.moveMode);
-            window.timepon.setOverlayMoveMode(next);
-        });
     }
 
     // カンペ
