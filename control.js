@@ -42,7 +42,20 @@ let displays = [];
 //   共通関数
 // -----------------------
 
+// コントローラー側の表示色もOverlayと同じにする（タイマー表示＋カンペ入力欄）
+function applyControlColor(color) {
+    const c = (typeof color === 'string' && color.trim() !== '') ? color : '#ffffff';
+
+    if (elTime) {
+        elTime.style.color = c;
+    }
+    if (elKanpe) {
+        elKanpe.style.color = c;
+    }
+}
+
 // タイマー状態に応じてボタンの有効/無効を更新する
+
 function updateButtons() {
     if (!currentTimer) return;
 
@@ -158,6 +171,9 @@ function applyOverlayToUI(overlay) {
     }
     if (elColor) {
         elColor.value = currentOverlay.color || '#ffffff';
+        applyControlColor(elColor.value);
+    } else {
+        applyControlColor(currentOverlay.color || '#ffffff');
     }
 
     // 移動モード
@@ -260,6 +276,8 @@ function registerUiEvents() {
     // 色：カラーピッカーが閉じたタイミング（change）で即時反映
     if (elColor) {
         elColor.addEventListener('change', () => {
+            applyControlColor(elColor.value);
+
             window.timepon.updateOverlay({
                 color: elColor.value || '#ffffff'
             });

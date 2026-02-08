@@ -17,7 +17,7 @@ const elKanpe = document.getElementById('kanpe');
 function applyAppearance(overlay) {
     const fontFamily = overlay.fontFamily || 'Segoe UI, system-ui, -apple-system, sans-serif';
     const fontSizePx = overlay.fontSizePx || 120;
-    const color = overlay.color || '#FFFFFF';
+    const color = overlay.color || '#ffffff';
 
     elTimer.style.fontFamily = fontFamily;
     elTimer.style.fontSize = `${fontSizePx}px`;
@@ -67,6 +67,15 @@ function init() {
     window.timepon.onStateSync(handleStateSync);
     window.timepon.onTimerTick(handleTimerTick);
     window.timepon.onKanpeUpdate(handleKanpeUpdate);
+
+    // 起動直後に state:sync を取り逃した場合でも、保存状態を必ず反映する
+    window.timepon.getState()
+        .then((s) => {
+            if (s) handleStateSync(s);
+        })
+        .catch(() => {
+            // 取得できなくても動作は継続（後続の state:sync を待つ）
+        });
 }
 
 init();
