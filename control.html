@@ -12,89 +12,84 @@
 <body>
     <div class="app">
         <div class="grid">
-            <div class="col">
-                <div class="card card-main">
-                    <div class="card-title">タイマー</div>
-                    <div class="row">
-                        <div class="time" id="timeText">00:00:00</div>
-                    </div>
-                    <div class="row small" id="stateText">停止</div>
-                    <div class="btnbar">
-                        <button id="btnStart" class="btn">Start</button>
-                        <button id="btnPause" class="btn">Pause</button>
-                        <button id="btnStop" class="btn">Stop</button>
-                        <button id="btnReset" class="btn">Reset</button>
-                    </div>
+            <div class="card card-main">
+                <div class="card-title">タイマー</div>
+                <div class="row">
+                    <div class="time" id="timeText">00:00:00</div>
                 </div>
-
-                <div class="card">
-                    <div class="card-title">タイマー設定</div>
-                    <div class="row">
-                        <label>モード</label>
-                        <select id="mode">
-                            <option value="down">カウントダウン</option>
-                            <option value="up">カウントアップ</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <label>開始値（分）</label>
-                        <input id="startMin" type="number" min="0" max="999" step="1" value="5">
-                        <span class="small">※秒は 0 固定（最小実装）</span>
-                    </div>
-                    <div class="row">
-                        <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">カンペ</div>
-                    <textarea id="kanpeText" placeholder="ここに入力したテキストが Overlay に表示されます"></textarea>
-                    <div class="row">
-                        <button id="btnSendKanpe" class="btn">送信</button>
-                        <button id="btnClearKanpe" class="btn">クリア</button>
-                    </div>
+                <div class="row small" id="stateText">停止</div>
+                <div class="btnbar">
+                    <button id="btnStart" class="btn">Start</button>
+                    <button id="btnPause" class="btn">Pause</button>
+                    <button id="btnStop" class="btn">Stop</button>
+                    <button id="btnReset" class="btn">Reset</button>
                 </div>
             </div>
 
-                <div class="card">
-                    <div class="card-title">表示（Overlay）設定</div>
-                    <div class="row">
-                        <label>移動モード</label>
-                        <button id="btnMoveMode" class="btn">移動モード: OFF</button>
-                        <span class="small">ONの間はOverlayをドラッグして位置変更できます</span>
-                    </div>
-                    <div class="row">
-                        <label>フォント</label>
-                        <select id="fontFamily" class="w-font">
-                            <option value="Segoe UI, system-ui, -apple-system, sans-serif">Segoe UI</option>
-                            <option value="Inter, system-ui, -apple-system, sans-serif">Inter</option>
-                            <option value="Roboto, system-ui, -apple-system, sans-serif">Roboto</option>
-                            <option value="&quot;Noto Sans JP&quot;, system-ui, -apple-system, sans-serif">Noto Sans JP</option>
-                            <option value="Montserrat, system-ui, -apple-system, sans-serif">Montserrat</option>
-                            <option value="Oswald, system-ui, -apple-system, sans-serif">Oswald</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <label>サイズ</label>
-                        <button id="btnFontDec" class="btn" type="button">-</button>
-                        <button id="btnFontInc" class="btn" type="button">+</button>
-                        <input id="fontSize" type="hidden" value="120">
-                        <span class="small">※即時反映</span>
-                    </div>
-                    <div class="row">
-                        <label>色</label>
-                        <input id="color" type="color" value="#ffffff">
-                    </div>
-                    <div class="row">
-                        <label>表示先ディスプレイ</label>
-                        <select id="displaySelect"></select>
-                    </div>
+            <div class="card">
+                <div class="card-title">タイマー設定</div>
+                <div class="row">
+                    <label>モード</label>
+                    <select id="mode">
+                        <option value="down">カウントダウン</option>
+                        <option value="up">カウントアップ</option>
+                    </select>
                 </div>
+                <div class="row">
+                    <label>開始値（分）</label>
+                    <input id="startMin" type="number" min="0" max="999" step="1" value="5">
+                    <span class="small">※秒は 0 固定（最小実装）</span>
+                </div>
+                <div class="row">
+                    <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
+                </div>
+            </div>
 
+            <div class="card">
+                <div class="card-title">カンペ</div>
+                <textarea id="kanpeText" placeholder="ここに入力したテキストが Overlay に表示されます"></textarea>
+                <div class="row">
+                    <button id="btnSendKanpe" class="btn">送信</button>
+                    <button id="btnClearKanpe" class="btn">クリア</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">表示（Overlay）設定</div>
+                <div class="row">
+                    <label>移動モード</label>
+                    <button id="btnMoveMode" class="btn">移動モード: OFF</button>
+                    <span class="small">ONの間はOverlayをドラッグして位置変更できます</span>
+                </div>
+                <div class="row">
+                    <label>フォント</label>
+                    <select id="fontFamily" class="w-font">
+                        <option value="Segoe UI, system-ui, -apple-system, sans-serif">Segoe UI</option>
+                        <option value="Inter, system-ui, -apple-system, sans-serif">Inter</option>
+                        <option value="Roboto, system-ui, -apple-system, sans-serif">Roboto</option>
+                        <option value="&quot;Noto Sans JP&quot;, system-ui, -apple-system, sans-serif">Noto Sans JP</option>
+                        <option value="Montserrat, system-ui, -apple-system, sans-serif">Montserrat</option>
+                        <option value="Oswald, system-ui, -apple-system, sans-serif">Oswald</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label>サイズ</label>
+                    <button id="btnFontDec" class="btn" type="button">-</button>
+                    <button id="btnFontInc" class="btn" type="button">+</button>
+                    <input id="fontSize" type="hidden" value="120">
+                    <span class="small">※即時反映</span>
+                </div>
+                <div class="row">
+                    <label>色</label>
+                    <input id="color" type="color" value="#ffffff">
+                </div>
+                <div class="row">
+                    <label>表示先ディスプレイ</label>
+                    <select id="displaySelect"></select>
+                </div>
             </div>
         </div>
     </div>
-
     <script src="control.js"></script>
 </body>
 </html>

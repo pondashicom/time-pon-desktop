@@ -383,11 +383,12 @@ function createOverlayWindow() {
 
 // 操作用コントロールウインドウ生成
 function createControlWindow() {
+    // UIを縦並びにしたので、初期サイズも縦型へ
     controlWindow = new BrowserWindow({
-        width: 1280,
-        height: 720,
-        minWidth: 1120,
-        minHeight: 630,
+        width: 560,
+        height: 920,
+        minWidth: 460,
+        minHeight: 780,
         resizable: true,
         show: true,
         webPreferences: {
@@ -397,9 +398,6 @@ function createControlWindow() {
             sandbox: false
         }
     });
-
-    // 常に 16:9 を維持
-    controlWindow.setAspectRatio(16 / 9);
 
     // 操作ウインドウはメニューを表示
     controlWindow.setMenuBarVisibility(true);
