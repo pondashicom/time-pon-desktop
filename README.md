@@ -1,25 +1,99 @@
 # TIME-PON-DESKTOP
 
-Transparent always-on-top timer overlay + control window (Electron).
+デスクトップ上に「透明・枠なし・常に最前面」のデジタルタイマー（HH:MM:SS）を表示する Electron アプリです。  
+Overlay（表示）ウインドウと、Control（操作）ウインドウの **2ウインドウ構成**になっています。
 
-## Setup
+- Overlay：透明・枠なし・最前面・クリック透過（文字だけ表示）
+- Control：タイマー制御／見た目設定／カンペ送信
+
+---
+
+## 主な機能
+
+### タイマー
+- 表示形式：`HH:MM:SS`
+- カウントダウン / カウントアップ
+- 開始値（分）設定
+- Start / Pause / Stop / Reset
+
+### Overlay（透明表示）
+- 透明背景、ウインドウ枠なし
+- 常に最前面表示
+- クリック透過（Overlay上でマウス操作を邪魔しない）
+- 文字のフォント／サイズ／色を変更
+- 表示先ディスプレイを選択（2画面運用向け）
+- 位置（X,Y）とサイズ（W,H）を指定（空欄は自動配置）
+
+### カンペ
+- Control の入力欄に書いたテキストを Overlay に表示
+
+---
+
+## 動作環境
+
+- Windows
+- Node.js / npm
+- Electron（devDependencies）
+
+---
+
+## セットアップ & 起動
+
 ```bash
 npm install
 npm start
+```
 
-Notes
+起動すると以下が開きます：
 
-    Overlay window: transparent / frameless / click-through / always-on-top
+- **Overlay**：透明のタイマー表示（最前面・クリック透過）
+- **Control**：操作画面（通常ウインドウ）
 
-    Control window: timer settings + overlay appearance + teleprompter text
+---
+
+## 使い方（最短）
+
+1. `npm start` で起動
+2. Control で以下を設定
+   - モード（カウントダウン/アップ）
+   - 開始値（分）
+   - Overlay の表示先ディスプレイ、フォント、サイズ、色
+3. `Start` で開始
+4. カンペ欄に入力 → `送信` で Overlay に反映
+
+---
+
+## 仕様メモ
+
+- タイマー内部は高精度で進みますが、表示は `HH:MM:SS` の整数秒に整形しています。
+- カウントダウンは「残り秒の表示が暴れない」ように調整しています。
+- 設定はユーザーデータ領域に保存します（プロジェクト内には保存しません）。
+
+---
+
+## 開発メモ
+
+### ファイル構成（主要）
+- `main.js`：ウインドウ生成、状態管理、タイマー制御、IPC
+- `preload.js`：renderer への安全な API 提供
+- `overlay.html / overlay.js`：透明 Overlay 表示
+- `control.html / control.js`：操作 UI
 
 
 ---
 
-## 4) Git 初期化コミット
-プロジェクト直下で：
+## Roadmap
 
-```powershell
-git init
-git add .
-git commit -m "Initial MVP: transparent overlay timer + control window"
+2026年2月8日に作り始めたのでまだ未完成です。
+
+- UIを整理（現状はポン出ししたのみ
+- Overlay 位置合わせモード（クリック透過の一時解除 / ドラッグ移動）
+- 秒指定（開始値を分＋秒に）
+- カンペの表示スタイル（サイズ/行間/揃え/自動折返し調整）
+- ショートカットキー（Start/Pause/Reset など）
+- ビルド（配布）手順の追加
+
+---
+
+## License
+MIT
