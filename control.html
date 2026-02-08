@@ -4,160 +4,107 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TIME-PON Control</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-            margin: 14px;
-        }
-        h2 {
-            margin: 8px 0 10px;
-            font-size: 18px;
-        }
-        .row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin: 8px 0;
-            flex-wrap: wrap;
-        }
-        label {
-            font-size: 13px;
-            opacity: 0.9;
-            min-width: 130px;
-        }
-        input[type="number"], input[type="text"], select, input[type="color"] {
-            padding: 6px 8px;
-            font-size: 13px;
-        }
-        textarea {
-            width: 100%;
-            min-height: 110px;
-            padding: 8px;
-            font-size: 13px;
-            resize: vertical;
-        }
-        .card {
-            border: 1px solid rgba(0,0,0,0.12);
-            border-radius: 8px;
-            padding: 12px;
-            margin: 10px 0;
-        }
-        .time {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 34px;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-        .btnbar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        button {
-            padding: 8px 10px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .hint {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-top: 6px;
-        }
-        .small {
-            font-size: 12px;
-            opacity: 0.85;
-        }
-    </style>
+    <link rel="stylesheet" href="control.css">
 </head>
 <body>
-    <h2>TIME-PON-DESKTOP</h2>
-
-    <div class="card">
-        <div class="row">
-            <div class="time" id="timeText">00:00:00</div>
-        </div>
-        <div class="row small" id="stateText">停止</div>
-        <div class="btnbar">
-            <button id="btnStart">Start</button>
-            <button id="btnPause">Pause</button>
-            <button id="btnStop">Stop</button>
-            <button id="btnReset">Reset</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>タイマー設定</h2>
-        <div class="row">
-            <label>モード</label>
-            <select id="mode">
-                <option value="down">カウントダウン</option>
-                <option value="up">カウントアップ</option>
-            </select>
-        </div>
-        <div class="row">
-            <label>開始値（分）</label>
-            <input id="startMin" type="number" min="0" max="999" step="1" value="5">
-            <span class="small">※秒は 0 固定（最小実装）</span>
-        </div>
-        <div class="row">
-            <button id="btnApplyTimer">設定を反映</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>表示（Overlay）設定</h2>
-
-        <div class="row">
-            <label>表示先ディスプレイ</label>
-            <select id="displaySelect"></select>
+    <div class="app">
+        <div class="header">
+            <div class="title">TIME-PON-DESKTOP</div>
         </div>
 
-        <div class="row">
-            <label>ウインドウサイズ（W×H）</label>
-            <input id="winW" type="number" min="200" max="4000" step="10" value="800">
-            <input id="winH" type="number" min="80" max="2000" step="10" value="220">
-        </div>
+        <div class="grid">
+            <div class="col">
+                <div class="card card-main">
+                    <div class="row">
+                        <div class="time" id="timeText">00:00:00</div>
+                    </div>
+                    <div class="row small" id="stateText">停止</div>
+                    <div class="btnbar">
+                        <button id="btnStart" class="btn">Start</button>
+                        <button id="btnPause" class="btn">Pause</button>
+                        <button id="btnStop" class="btn">Stop</button>
+                        <button id="btnReset" class="btn">Reset</button>
+                    </div>
+                </div>
 
-        <div class="row">
-            <label>位置（X, Y）</label>
-            <input id="posX" type="number" step="1" placeholder="自動">
-            <input id="posY" type="number" step="1" placeholder="自動">
-            <span class="small">空欄で自動（上部中央）</span>
-        </div>
+                <div class="card">
+                    <div class="card-title">タイマー設定</div>
+                    <div class="row">
+                        <label>モード</label>
+                        <select id="mode">
+                            <option value="down">カウントダウン</option>
+                            <option value="up">カウントアップ</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <label>開始値（分）</label>
+                        <input id="startMin" type="number" min="0" max="999" step="1" value="5">
+                        <span class="small">※秒は 0 固定（最小実装）</span>
+                    </div>
+                    <div class="row">
+                        <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
+                    </div>
+                </div>
 
-        <div class="row">
-            <label>フォント</label>
-            <input id="fontFamily" type="text" value="Segoe UI" style="width: 260px;">
-        </div>
+                <div class="card">
+                    <div class="card-title">カンペ</div>
+                    <textarea id="kanpeText" placeholder="ここに入力したテキストが Overlay に表示されます"></textarea>
+                    <div class="row">
+                        <button id="btnSendKanpe" class="btn">送信</button>
+                        <button id="btnClearKanpe" class="btn">クリア</button>
+                    </div>
+                </div>
+            </div>
 
-        <div class="row">
-            <label>サイズ（px）</label>
-            <input id="fontSize" type="number" min="10" max="400" step="1" value="120">
-        </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-title">表示（Overlay）設定</div>
 
-        <div class="row">
-            <label>色</label>
-            <input id="color" type="color" value="#ffffff">
-        </div>
+                    <div class="row">
+                        <label>表示先ディスプレイ</label>
+                        <select id="displaySelect"></select>
+                    </div>
 
-        <div class="row">
-            <button id="btnApplyOverlay">Overlayへ反映</button>
-        </div>
+                    <div class="row">
+                        <label>ウインドウサイズ（W×H）</label>
+                        <input id="winW" type="number" min="200" max="4000" step="10" value="800">
+                        <input id="winH" type="number" min="80" max="2000" step="10" value="220">
+                    </div>
 
-        <div class="hint">
-            ※ Overlay は「透明・枠なし・常に最前面・クリック透過」です（操作はこのウインドウで行います）。
-        </div>
-    </div>
+                    <div class="row">
+                        <label>位置（X, Y）</label>
+                        <input id="posX" type="number" step="1" placeholder="自動">
+                        <input id="posY" type="number" step="1" placeholder="自動">
+                        <span class="small">空欄で自動（上部中央）</span>
+                    </div>
 
-    <div class="card">
-        <h2>カンペ</h2>
-        <textarea id="kanpeText" placeholder="ここに入力したテキストが Overlay に表示されます"></textarea>
-        <div class="row">
-            <button id="btnSendKanpe">送信</button>
-            <button id="btnClearKanpe">クリア</button>
+                    <div class="row">
+                        <label>フォント</label>
+                        <input id="fontFamily" type="text" value="Segoe UI" class="w-font">
+                    </div>
+
+                    <div class="row">
+                        <label>サイズ（px）</label>
+                        <input id="fontSize" type="number" min="10" max="400" step="1" value="120">
+                    </div>
+
+                    <div class="row">
+                        <label>色</label>
+                        <input id="color" type="color" value="#ffffff">
+                    </div>
+
+                    <div class="row">
+                        <button id="btnApplyOverlay" class="btn btn-wide">Overlayへ反映</button>
+                    </div>
+
+                    <div class="hint">
+                        ※ Overlay は「透明・枠なし・常に最前面・クリック透過」です（操作はこのウインドウで行います）。
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

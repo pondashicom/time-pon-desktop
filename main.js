@@ -181,8 +181,10 @@ function createOverlayWindow() {
 // 操作用コントロールウインドウ生成
 function createControlWindow() {
     controlWindow = new BrowserWindow({
-        width: 520,
-        height: 760,
+        width: 1280,
+        height: 720,
+        minWidth: 1120,
+        minHeight: 630,
         resizable: true,
         show: true,
         webPreferences: {
@@ -192,6 +194,9 @@ function createControlWindow() {
             sandbox: false
         }
     });
+
+    // 常に 16:9 を維持
+    controlWindow.setAspectRatio(16 / 9);
 
     controlWindow.setMenuBarVisibility(false);
     controlWindow.loadFile(path.join(__dirname, 'control.html'));
