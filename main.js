@@ -418,9 +418,6 @@ function registerIpc() {
 
         if (payload.displayId != null) state.overlay.displayId = payload.displayId;
 
-        if (payload.width != null) state.overlay.width = clampInt(payload.width, 200, 4000);
-        if (payload.height != null) state.overlay.height = clampInt(payload.height, 80, 2000);
-
         // x,y は null で「自動配置」に戻す
         if ('x' in payload) state.overlay.x = (payload.x == null || payload.x === '') ? null : clampInt(payload.x, -100000, 100000);
         if ('y' in payload) state.overlay.y = (payload.y == null || payload.y === '') ? null : clampInt(payload.y, -100000, 100000);
