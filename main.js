@@ -55,7 +55,21 @@ function secondsToMSS(sec) {
     const s = Math.max(0, Math.floor(sec));
     const mm = Math.floor(s / 60);
     const ss = s % 60;
-    return `${pad3(mm)}:${pad2(ss)}`;
+
+    // 残りMMM分SS秒
+    return `残り${pad3(mm)}分${pad2(ss)}秒`;
+}
+
+function secondsToMSSHtml(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    const mm = Math.floor(s / 60);
+    const ss = s % 60;
+
+    const mmStr = pad3(mm);
+    const ssStr = pad2(ss);
+
+    // 「残り/分/秒」を小さく見せるためspanを付ける
+    return `<span class="t-label">残り</span><span class="t-num">${mmStr}</span><span class="t-label">分</span><span class="t-num">${ssStr}</span><span class="t-label">秒</span>`;
 }
 
 // タイマー表示文字列を作る
@@ -64,6 +78,13 @@ function buildTimerText() {
         return secondsToMSS(state.timer.currentSeconds);
     }
     return secondsToHMS(state.timer.currentSeconds);
+}
+
+function buildTimerHtml() {
+    if (state.timer.mode === 'down' && state.timer.downDisplayMode === 'mss') {
+        return secondsToMSSHtml(state.timer.currentSeconds);
+    }
+    return null;
 }
 
 // -----------------------
@@ -505,7 +526,8 @@ function buildTimerPayload() {
         currentSeconds: state.timer.currentSeconds,
         running: state.timer.running,
         paused: state.timer.paused,
-        timeText: buildTimerText()
+        timeText: buildTimerText(),
+        timeHtml: buildTimerHtml()
     };
 }
 

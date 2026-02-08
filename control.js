@@ -272,13 +272,16 @@ function registerPlacementEvents() {
 }
 
 // タイマー状態に応じた表示（時刻）を反映する
-
-// タイマー状態に応じた表示（時刻）を反映する
 function applyTimerToUI(timer) {
     if (!timer) return;
 
     currentTimer = timer;
-    elTime.textContent = timer.timeText || '00:00:00';
+
+    if (timer.timeHtml) {
+        elTime.innerHTML = timer.timeHtml;
+    } else {
+        elTime.textContent = timer.timeText || '00:00:00';
+    }
 
     updateButtons();
     updateBlinking(timer);

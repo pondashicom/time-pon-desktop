@@ -116,7 +116,18 @@ label {
     padding: 6px 10px;
 }
 
+.time .t-label {
+    font-size: 0.5em; /* ”š‚Ì–ñ50% */
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+}
+.time .t-num {
+    font-size: 1em;
+}
+
 .btnbar {
+
     display: flex;
     gap: 8px;
     flex-wrap: wrap;

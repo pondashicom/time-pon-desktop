@@ -79,12 +79,16 @@ function updateProgressFromTimer(t) {
     // カウントダウンのみ表示（開始値0は非表示）
     if (mode !== 'down' || start <= 0) {
         elProgressWrap.style.display = 'none';
+        elProgressBar.style.transform = 'scaleX(1)';
         return;
     }
 
     const ratio = Math.max(0, Math.min(1, cur / start));
     elProgressWrap.style.display = 'block';
-    elProgressBar.style.width = `${(ratio * 100).toFixed(3)}%`;
+
+    // 幅は固定(100%)、transform で「右→左に減る」表現
+    elProgressBar.style.width = '100%';
+    elProgressBar.style.transform = `scaleX(${ratio.toFixed(6)})`;
 }
 
 // -----------------------
@@ -99,8 +103,12 @@ function handleStateSync(payload) {
 
         applyClockVisibility(!!payload.overlay.showClock);
     }
-    if (payload && payload.timer && payload.timer.timeText) {
-        elTimer.textContent = payload.timer.timeText;
+    if (payload && payload.timer) {
+        if (payload.timer.timeHtml) {
+            elTimer.innerHTML = payload.timer.timeHtml;
+        } else if (payload.timer.timeText) {
+            elTimer.textContent = payload.timer.timeText;
+        }
         updateProgressFromTimer(payload.timer);
     }
     if (payload && payload.overlay && typeof payload.overlay.kanpeText === 'string') {
@@ -110,8 +118,12 @@ function handleStateSync(payload) {
 
 // timer:tick を受け取り、タイマー表示を更新する
 function handleTimerTick(t) {
-    if (t && t.timeText) {
-        elTimer.textContent = t.timeText;
+    if (t) {
+        if (t.timeHtml) {
+            elTimer.innerHTML = t.timeHtml;
+        } else if (t.timeText) {
+            elTimer.textContent = t.timeText;
+        }
     }
     updateProgressFromTimer(t);
 

@@ -56,7 +56,17 @@
                 0 0 12px rgba(0,0,0,0.45);
             white-space: nowrap;
         }
+        .timer .t-label {
+            font-size: 0.5em; /* 数字の約50% */
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            opacity: 0.95;
+        }
+        .timer .t-num {
+            font-size: 1em;
+        }
         .clock {
+
             font-weight: 600;
             line-height: 1.0;
             font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -82,6 +92,11 @@
             height: 100%;
             width: 100%;
             background: rgba(255,255,255,0.85);
+
+            /* 右端を固定して、右→左に減る（空きが左に増える） */
+            transform-origin: right center;
+            transform: scaleX(1);
+            will-change: transform;
         }
         .kanpe {
 
