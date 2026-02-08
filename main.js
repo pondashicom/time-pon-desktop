@@ -111,6 +111,30 @@ function sendToWindows(channel, payload) {
     }
 }
 
+//   Overlay 自動サイズ/配置
+const OVERLAY_MARGIN_X = 24;
+const OVERLAY_MARGIN_Y = 24;
+
+// フォントサイズ(px)からOverlayウインドウの推奨サイズを算出する
+function calcOverlayAutoSize(fontSizePx) {
+    const fs = clampInt(fontSizePx, 10, 400);
+
+    // 時計（00:00:00）を基準に横幅を見積もる（Segoe UI想定の概算）
+    const TIMER_EM_WIDTH = 3.9;
+    const PAD_X = 48;
+
+    // カンペは2行ぶん確保（空の場合は余白として吸収される）
+    const KANPE_LINES = 2;
+    const GAP = 8;
+    const PAD_Y = 24;
+
+    const kanpeSize = Math.max(12, Math.floor(fs * 0.42));
+    const width = clampInt(Math.round(fs * TIMER_EM_WIDTH + PAD_X), 200, 4000);
+    const height = clampInt(Math.round(fs + GAP + (kanpeSize * 1.2 * KANPE_LINES) + PAD_Y), 80, 2000);
+
+    return { width, height };
+}
+
 // オーバレイ表示位置/サイズを画面内に収める
 function ensureOverlayBounds() {
     const displays = screen.getAllDisplays();
@@ -133,9 +157,9 @@ function ensureOverlayBounds() {
     let x = (state.overlay.x != null) ? clampInt(state.overlay.x, wa.x, wa.x + wa.width - 1) : null;
     let y = (state.overlay.y != null) ? clampInt(state.overlay.y, wa.y, wa.y + wa.height - 1) : null;
 
-    // 未指定なら、上部中央に配置
-    if (x == null) x = Math.floor(wa.x + (wa.width - w) / 2);
-    if (y == null) y = Math.floor(wa.y + 40);
+    // 未指定なら、右上（マージン付き）に配置
+    if (x == null) x = Math.floor(wa.x + wa.width - w - OVERLAY_MARGIN_X);
+    if (y == null) y = Math.floor(wa.y + OVERLAY_MARGIN_Y);
 
     // 画面からはみ出しを抑制
     x = Math.max(wa.x, Math.min(x, wa.x + wa.width - w));
@@ -212,6 +236,11 @@ function createControlWindow() {
 
 // オーバレイ設定を反映し、全ウインドウへ同期して保存
 function applyOverlaySettingsAndBroadcast() {
+    // フォントサイズからウインドウサイズを自動算出（W×H手動指定はしない方針）
+    const auto = calcOverlayAutoSize(state.overlay.fontSizePx);
+    state.overlay.width = auto.width;
+    state.overlay.height = auto.height;
+
     if (overlayWindow && !overlayWindow.isDestroyed()) {
         const b = ensureOverlayBounds();
         overlayWindow.setBounds(b, false);

@@ -73,6 +73,24 @@ function getIntOrNull(v) {
     return Number.isFinite(n) ? n : null;
 }
 
+// フォントサイズ(px)からOverlayウインドウの推奨サイズを算出する
+function calcOverlayWindowSizePx(fontSizePx) {
+    const fs = Math.max(10, Math.min(400, parseInt(fontSizePx, 10) || 120));
+
+    const TIMER_EM_WIDTH = 3.9;
+    const PAD_X = 48;
+
+    const KANPE_LINES = 2;
+    const GAP = 8;
+    const PAD_Y = 24;
+
+    const kanpeSize = Math.max(12, Math.floor(fs * 0.42));
+    const width = Math.max(200, Math.min(4000, Math.round(fs * TIMER_EM_WIDTH + PAD_X)));
+    const height = Math.max(80, Math.min(2000, Math.round(fs + GAP + (kanpeSize * 1.2 * KANPE_LINES) + PAD_Y)));
+
+    return { width, height };
+}
+
 // タイマー状態に応じた表示（時刻/状態）を反映する
 function applyTimerToUI(timer) {
     if (!timer) return;
@@ -101,8 +119,12 @@ function applyOverlayToUI(overlay) {
     elFontSize.value = currentOverlay.fontSizePx || 120;
     elColor.value = currentOverlay.color || '#ffffff';
 
-    elWinW.value = currentOverlay.width || 800;
-    elWinH.value = currentOverlay.height || 220;
+    // W×H はフォントサイズから自動算出（手動調整しない方針）
+    const auto = calcOverlayWindowSizePx(currentOverlay.fontSizePx || 120);
+    elWinW.value = auto.width;
+    elWinH.value = auto.height;
+    elWinW.disabled = true;
+    elWinH.disabled = true;
 
     elPosX.value = (currentOverlay.x == null) ? '' : String(currentOverlay.x);
     elPosY.value = (currentOverlay.y == null) ? '' : String(currentOverlay.y);
@@ -175,17 +197,30 @@ function registerUiEvents() {
     });
 
     btnApplyOverlay.addEventListener('click', () => {
+        const fontSizePx = parseInt(elFontSize.value || '120', 10);
+        const auto = calcOverlayWindowSizePx(fontSizePx);
+
+        // UI上のW×H表示も更新（見えないOverlayの調整を数値で把握できるようにする）
+        elWinW.value = auto.width;
+        elWinH.value = auto.height;
+
         const payload = {
             displayId: parseInt(elDisplaySelect.value, 10),
-            width: parseInt(elWinW.value || '800', 10),
-            height: parseInt(elWinH.value || '220', 10),
+            width: auto.width,
+            height: auto.height,
             x: getIntOrNull(elPosX.value),
             y: getIntOrNull(elPosY.value),
             fontFamily: elFontFamily.value || 'Segoe UI',
-            fontSizePx: parseInt(elFontSize.value || '120', 10),
+            fontSizePx,
             color: elColor.value || '#ffffff'
         };
         window.timepon.updateOverlay(payload);
+    });
+
+    elFontSize.addEventListener('input', () => {
+        const auto = calcOverlayWindowSizePx(elFontSize.value);
+        elWinW.value = auto.width;
+        elWinH.value = auto.height;
     });
 
     btnSendKanpe.addEventListener('click', () => {

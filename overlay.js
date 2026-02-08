@@ -4,16 +4,16 @@
 // -----------------------
 
 // -----------------------
-//   DOMQÆ
+//   DOMå‚ç…§
 // -----------------------
 const elTimer = document.getElementById('timer');
 const elKanpe = document.getElementById('kanpe');
 
 // -----------------------
-//   •\¦İ’è
+//   è¡¨ç¤ºè¨­å®š
 // -----------------------
 
-// ƒI[ƒoƒŒƒC‚ÌŒ©‚½–ÚiƒtƒHƒ“ƒg/ƒTƒCƒY/Fj‚ğ”½‰f‚·‚é
+// ã‚ªãƒ¼ãƒãƒ¬ã‚¤ã®è¦‹ãŸç›®ï¼ˆãƒ•ã‚©ãƒ³ãƒˆ/ã‚µã‚¤ã‚º/è‰²ï¼‰ã‚’åæ˜ ã™ã‚‹
 function applyAppearance(overlay) {
     const fontFamily = overlay.fontFamily || 'Segoe UI';
     const fontSizePx = overlay.fontSizePx || 120;
@@ -29,10 +29,10 @@ function applyAppearance(overlay) {
 }
 
 // -----------------------
-//   IPCóMiRenderer APIj
+//   IPCå—ä¿¡ï¼ˆRenderer APIï¼‰
 // -----------------------
 
-// state:sync ‚ğó‚¯æ‚èAŒ©‚½–Ú/ƒ^ƒCƒ}[/ƒJƒ“ƒy•\¦‚ğ“¯Šú‚·‚é
+// state:sync ã‚’å—ã‘å–ã‚Šã€è¦‹ãŸç›®/ã‚¿ã‚¤ãƒãƒ¼/ã‚«ãƒ³ãƒšè¡¨ç¤ºã‚’åŒæœŸã™ã‚‹
 function handleStateSync(payload) {
     if (payload && payload.overlay) {
         applyAppearance(payload.overlay);
@@ -45,23 +45,23 @@ function handleStateSync(payload) {
     }
 }
 
-// timer:tick ‚ğó‚¯æ‚èAƒ^ƒCƒ}[•\¦‚ğXV‚·‚é
+// timer:tick ã‚’å—ã‘å–ã‚Šã€ã‚¿ã‚¤ãƒãƒ¼è¡¨ç¤ºã‚’æ›´æ–°ã™ã‚‹
 function handleTimerTick(t) {
     if (t && t.timeText) {
         elTimer.textContent = t.timeText;
     }
 }
 
-// kanpe:update ‚ğó‚¯æ‚èAƒJƒ“ƒy•\¦‚ğXV‚·‚é
+// kanpe:update ã‚’å—ã‘å–ã‚Šã€ã‚«ãƒ³ãƒšè¡¨ç¤ºã‚’æ›´æ–°ã™ã‚‹
 function handleKanpeUpdate(p) {
     elKanpe.textContent = (p && typeof p.text === 'string') ? p.text : '';
 }
 
 // -----------------------
-//   ‰Šú‰»
+//   åˆæœŸåŒ–
 // -----------------------
 
-// ƒCƒxƒ“ƒgw“Ç‚ğ“o˜^‚·‚é
+// ã‚¤ãƒ™ãƒ³ãƒˆè³¼èª­ã‚’ç™»éŒ²ã™ã‚‹
 function init() {
     window.timepon.onStateSync(handleStateSync);
     window.timepon.onTimerTick(handleTimerTick);

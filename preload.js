@@ -4,28 +4,28 @@
 // -----------------------
 
 // -----------------------
-//   ‰ŠúÝ’è
+//   åˆæœŸè¨­å®š
 // -----------------------
 const { contextBridge, ipcRenderer } = require('electron');
 
 // -----------------------
-//   Renderer‚ÖŒöŠJ‚·‚éAPI
+//   Rendererã¸å…¬é–‹ã™ã‚‹API
 // -----------------------
 contextBridge.exposeInMainWorld('timepon', {
 
-    //   Žæ“¾Œniinvokej
+    //   å–å¾—ç³»ï¼ˆinvokeï¼‰
     getDisplays: () => ipcRenderer.invoke('displays:get'),
     getState: () => ipcRenderer.invoke('state:get'),
 
-    //   ƒ^ƒCƒ}[‘€ìisendj
+    //   ã‚¿ã‚¤ãƒžãƒ¼æ“ä½œï¼ˆsendï¼‰
     setTimer: (payload) => ipcRenderer.send('timer:set', payload),
     timerControl: (action) => ipcRenderer.send('timer:control', { action }),
 
-    //   ƒI[ƒoƒŒƒC/ƒJƒ“ƒy‘€ìisendj
+    //   ã‚ªãƒ¼ãƒãƒ¬ã‚¤/ã‚«ãƒ³ãƒšæ“ä½œï¼ˆsendï¼‰
     updateOverlay: (payload) => ipcRenderer.send('overlay:update', payload),
     setKanpe: (text) => ipcRenderer.send('kanpe:set', { text }),
 
-    //   ƒCƒxƒ“ƒgw“Çionj
+    //   ã‚¤ãƒ™ãƒ³ãƒˆè³¼èª­ï¼ˆonï¼‰
     onStateSync: (cb) => ipcRenderer.on('state:sync', (_e, p) => cb(p)),
     onTimerTick: (cb) => ipcRenderer.on('timer:tick', (_e, p) => cb(p)),
     onKanpeUpdate: (cb) => ipcRenderer.on('kanpe:update', (_e, p) => cb(p))
