@@ -157,6 +157,10 @@ function calcOverlayAutoSize(fontSizePx, kanpeText) {
     // タイマーの必要幅(px)
     const timerWidthPx = fs * TIMER_EM_WIDTH;
 
+    // 横幅は「タイマー幅の1.5倍」を上限にする（それ以上は折り返して縦に伸ばす）
+    const baseWidth = timerWidthPx + PAD_X;
+    const maxWidth = baseWidth * 1.5;
+
     // カンペの必要幅(px)（最長行ベース）
     let kanpeMaxLinePx = 0;
     let kanpeVisualLines = 0;
@@ -174,8 +178,12 @@ function calcOverlayAutoSize(fontSizePx, kanpeText) {
         // ※ width は後段で確定するので、ここでは一旦ダミー（後段で再計算）
     }
 
-    // 幅は「タイマー vs カンペ最長行」の大きい方を採用（上限は安全のためclamp）
-    let width = clampInt(Math.round(Math.max(timerWidthPx, kanpeMaxLinePx) + PAD_X), 200, 4000);
+    // 幅は「タイマー幅」を下限、「タイマー幅×1.5」を上限としてクランプ
+    let width = clampInt(
+        Math.round(Math.max(baseWidth, Math.min(maxWidth, kanpeMaxLinePx + PAD_X))),
+        200,
+        4000
+    );
 
     // 折り返し行数（幅確定後）
     if (text !== '') {
