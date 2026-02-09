@@ -31,6 +31,8 @@ const btnStart = document.getElementById('btnStart');
 const btnPause = document.getElementById('btnPause');
 const btnReset = document.getElementById('btnReset');
 const btnApplyTimer = document.getElementById('btnApplyTimer');
+const btnToggleTimer = document.getElementById('btnToggleTimer');
+
 const btnSendKanpe = document.getElementById('btnSendKanpe');
 const btnClearKanpe = document.getElementById('btnClearKanpe');
 
@@ -346,6 +348,12 @@ function applyOverlayToUI(overlay) {
         elShowClock.checked = !!currentOverlay.showClock;
     }
 
+    // タイマー表示トグル（表示中:「非表示」/ 非表示中:「表示」）
+    if (btnToggleTimer) {
+        const visible = !currentOverlay || currentOverlay.showTimer !== false;
+        btnToggleTimer.textContent = visible ? 'タイマー非表示' : 'タイマー表示';
+    }
+
     // 表示場所（仮想表示）を更新
     updatePlacementMarker();
 
@@ -418,6 +426,22 @@ function registerUiEvents() {
             downDisplayMode
         });
     });
+
+    if (btnToggleTimer) {
+        btnToggleTimer.addEventListener('click', () => {
+            const visible = !currentOverlay || currentOverlay.showTimer !== false;
+            const next = !visible;
+
+            window.timepon.updateOverlay({
+                showTimer: next
+            });
+
+            // 体感をよくするため、UI上の表示だけ先に更新
+            if (!currentOverlay) currentOverlay = {};
+            currentOverlay.showTimer = next;
+            btnToggleTimer.textContent = next ? '非表示' : '表示';
+        });
+    }
 
     registerPlacementEvents();
 

@@ -107,18 +107,19 @@ const state = {
         lastTickMs: null
     },
     overlay: {
-            displayId: null,               // electron display.id
-            width: 800,
-            height: 220,
-            x: null,
-            y: null,
-            moveMode: false,
-            showClock: false,
-            fontFamily: 'Segoe UI, system-ui, -apple-system, sans-serif',
-            fontSizePx: 120,
-            color: '#FFFFFF',
-            kanpeText: ''
-        }
+        displayId: null,               // electron display.id
+        width: 800,
+        height: 220,
+        x: null,
+        y: null,
+        moveMode: false,
+        showTimer: true,
+        showClock: false,
+        fontFamily: 'Segoe UI, system-ui, -apple-system, sans-serif',
+        fontSizePx: 120,
+        color: '#FFFFFF',
+        kanpeText: ''
+    }
 };
 
 // state.jsonから状態を読み込む
@@ -155,6 +156,11 @@ function loadState() {
         state.overlay.moveMode = false;
 
         // 追加設定の正規化
+        if (!('showTimer' in state.overlay)) {
+            state.overlay.showTimer = true;
+        } else {
+            state.overlay.showTimer = !!state.overlay.showTimer;
+        }
         state.overlay.showClock = !!state.overlay.showClock;
         state.timer.downDisplayMode = (state.timer.downDisplayMode === 'mss') ? 'mss' : 'hms';
     } catch (e) {
@@ -701,6 +707,7 @@ function registerIpc() {
         if (payload.fontSizePx != null) state.overlay.fontSizePx = clampInt(payload.fontSizePx, 10, 400);
         if (payload.color != null) state.overlay.color = String(payload.color).slice(0, 64);
 
+        if ('showTimer' in payload) state.overlay.showTimer = !!payload.showTimer;
         if ('showClock' in payload) state.overlay.showClock = !!payload.showClock;
 
         // kanpeText は別経路でも更新可能

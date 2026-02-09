@@ -59,10 +59,38 @@ function applyAppearance(overlay) {
 //   追加表示（現在時刻 / プログレス）
 // -----------------------
 let clockEnabled = false;
+let timerVisible = true;
+
+function applyTimerVisibility(enabled) {
+    timerVisible = !!enabled;
+
+    if (elTimer) {
+        elTimer.style.display = timerVisible ? 'block' : 'none';
+    }
+
+    // タイマー非表示時は、付随表示もまとめて消す
+    if (!timerVisible) {
+        if (elClock) elClock.style.display = 'none';
+        if (elProgressWrap) {
+            elProgressWrap.style.display = 'none';
+            if (elProgressBar) elProgressBar.style.transform = 'scaleX(1)';
+        }
+        return;
+    }
+
+    // 再表示時：現在時刻表示の可否は clockEnabled に従う
+    applyClockVisibility(clockEnabled);
+}
 
 function applyClockVisibility(enabled) {
     clockEnabled = !!enabled;
     if (!elClock) return;
+
+    if (!timerVisible) {
+        elClock.style.display = 'none';
+        return;
+    }
+
     elClock.style.display = clockEnabled ? 'block' : 'none';
     if (clockEnabled) {
         elClock.textContent = `現在時刻 ${nowToHMS()}`;
@@ -71,6 +99,12 @@ function applyClockVisibility(enabled) {
 
 function updateProgressFromTimer(t) {
     if (!elProgressWrap || !elProgressBar) return;
+
+    if (!timerVisible) {
+        elProgressWrap.style.display = 'none';
+        elProgressBar.style.transform = 'scaleX(1)';
+        return;
+    }
 
     const mode = t && t.mode ? String(t.mode) : 'down';
     const start = t && Number.isFinite(t.startSeconds) ? t.startSeconds : 0;
@@ -101,13 +135,16 @@ function handleStateSync(payload) {
         applyAppearance(payload.overlay);
         document.body.classList.toggle('move-mode', !!payload.overlay.moveMode);
 
+        applyTimerVisibility(payload.overlay.showTimer !== false);
         applyClockVisibility(!!payload.overlay.showClock);
     }
     if (payload && payload.timer) {
-        if (payload.timer.timeHtml) {
-            elTimer.innerHTML = payload.timer.timeHtml;
-        } else if (payload.timer.timeText) {
-            elTimer.textContent = payload.timer.timeText;
+        if (timerVisible) {
+            if (payload.timer.timeHtml) {
+                elTimer.innerHTML = payload.timer.timeHtml;
+            } else if (payload.timer.timeText) {
+                elTimer.textContent = payload.timer.timeText;
+            }
         }
         updateProgressFromTimer(payload.timer);
     }
@@ -119,15 +156,17 @@ function handleStateSync(payload) {
 // timer:tick を受け取り、タイマー表示を更新する
 function handleTimerTick(t) {
     if (t) {
-        if (t.timeHtml) {
-            elTimer.innerHTML = t.timeHtml;
-        } else if (t.timeText) {
-            elTimer.textContent = t.timeText;
+        if (timerVisible) {
+            if (t.timeHtml) {
+                elTimer.innerHTML = t.timeHtml;
+            } else if (t.timeText) {
+                elTimer.textContent = t.timeText;
+            }
         }
     }
     updateProgressFromTimer(t);
 
-    if (clockEnabled && elClock) {
+    if (clockEnabled && timerVisible && elClock) {
         elClock.textContent = `現在時刻 ${nowToHMS()}`;
     }
 }
@@ -149,7 +188,7 @@ function init() {
 
     // 現在時刻は 1秒ごとに更新（表示がONのときだけ意味がある）
     setInterval(() => {
-        if (!clockEnabled || !elClock) return;
+        if (!clockEnabled || !timerVisible || !elClock) return;
         elClock.textContent = `現在時刻 ${nowToHMS()}`;
     }, 1000);
 
