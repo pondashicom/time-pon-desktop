@@ -555,11 +555,26 @@ function buildTimerPayload() {
 
 // タイマーを開始値リセット
 function timerResetToStart() {
+    const wasRunning = !!state.timer.running;
+    const wasPaused = !!state.timer.paused;
+
     state.timer.currentSecondsPrecise = state.timer.startSeconds;
     state.timer.currentSeconds = state.timer.startSeconds;
-    state.timer.running = false;
-    state.timer.paused = false;
-    state.timer.lastTickMs = null;
+
+    // リセット後の状態は「リセットボタンを押した瞬間の状態」を維持する
+    // - 実行中: リセット後すぐ再開（running=true, paused=false）
+    // - 一時停止: リセット後も一時停止（running=true, paused=true）
+    // - 停止: リセット後も停止（running=false, paused=false）
+    if (!wasRunning) {
+        state.timer.running = false;
+        state.timer.paused = false;
+        state.timer.lastTickMs = null;
+        return;
+    }
+
+    state.timer.running = true;
+    state.timer.paused = wasPaused;
+    state.timer.lastTickMs = wasPaused ? null : Date.now();
 }
 
 // タイマーを開始（再開）

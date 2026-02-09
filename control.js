@@ -61,7 +61,6 @@ function applyControlColor(color) {
 }
 
 // タイマー状態に応じてボタンの有効/無効を更新する
-
 function updateButtons() {
     if (!currentTimer) return;
 
@@ -70,7 +69,7 @@ function updateButtons() {
 
     btnStart.disabled = running && !paused;
     btnPause.disabled = !running || paused;
-    btnReset.disabled = running && !paused;
+    btnReset.disabled = false;
 }
 
 // タイマー状態に応じて「点滅表示」を更新する
