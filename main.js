@@ -56,8 +56,8 @@ function secondsToMSS(sec) {
     const mm = Math.floor(s / 60);
     const ss = s % 60;
 
-    // 残りMMM分SS秒
-    return `残り${pad3(mm)}分${pad2(ss)}秒`;
+    // 残りMMM分SS秒（分がM/MMのときは0プレフィックスなし）
+    return `残り${mm}分${pad2(ss)}秒`;
 }
 
 function secondsToMSSHtml(sec) {
@@ -65,7 +65,7 @@ function secondsToMSSHtml(sec) {
     const mm = Math.floor(s / 60);
     const ss = s % 60;
 
-    const mmStr = pad3(mm);
+    const mmStr = String(mm);
     const ssStr = pad2(ss);
 
     // 「残り/分/秒」を小さく見せるためspanを付ける
@@ -299,7 +299,7 @@ function calcOverlayAutoSize(fontSizePx, kanpeText, fontFamily, showClock, timer
     let extraH = 0;
 
     if (!!showClock) {
-        const clockSize = Math.max(10, Math.floor(fs * 0.22));
+        const clockSize = Math.max(10, Math.floor(fs * 0.27));
         const clockLineH = clockSize * 1.2;
         extraH += Math.round(clockLineH + GAP);
     }
@@ -467,7 +467,7 @@ function createControlWindow() {
     // UIを縦並びにしたので、初期サイズも縦型へ
     controlWindow = new BrowserWindow({
         width: 560,
-        height: 920,
+        height: 980,
         minWidth: 460,
         minHeight: 780,
         resizable: true,

@@ -107,8 +107,6 @@ label {
     line-height: 1.05;
     letter-spacing: 0.05em;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-
-    /* タイマー表示部分だけ少し暗い背景で強調 */
     background: rgba(0, 0, 0, 0.22);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom-color: rgba(0, 0, 0, 0.55);
@@ -117,7 +115,7 @@ label {
 }
 
 .time .t-label {
-    font-size: 0.5em; /* 数字の約50% */
+    font-size: 0.5em;
     font-weight: 800;
     letter-spacing: 0.02em;
     opacity: 0.95;
@@ -140,7 +138,7 @@ label {
     border-bottom-color: rgba(0, 0, 0, 0.55);
     background: linear-gradient(180deg, rgba(120, 120, 120, 0.40), rgba(60, 60, 60, 0.45));
     color: rgba(255, 255, 255, 0.92);
-    padding: 8px 10px;
+    padding: 5px 5px;
     font-size: 12px;
     border-radius: 7px;
     cursor: pointer;
@@ -156,7 +154,6 @@ label {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-/* 実行中/一時停止の表示はテキストではなくボタン点滅で表現 */
 @keyframes neonPulseOrange {
     0%, 100% {
         box-shadow: 0 2px 7px rgba(0, 0, 0, 0.25);
@@ -245,7 +242,6 @@ textarea:focus {
     width: 220px;
 }
 
-/* 表示場所（仮想 16:9） */
 .placement-wrap {
     flex: 1 1 auto;
     min-width: 220px;
@@ -263,7 +259,6 @@ textarea:focus {
     user-select: none;
 }
 
-/* 16:9 を保つ（親の幅に追従） */
 .placement-area::before {
     content: "";
     display: block;

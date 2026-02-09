@@ -66,7 +66,6 @@
             font-size: 1em;
         }
         .clock {
-
             font-weight: 600;
             line-height: 1.0;
             font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -79,9 +78,19 @@
             display: none;
             opacity: 0.95;
         }
+        .clock .c-label {
+            font-size: 0.85em; /* 「現在時刻」を少し小さく */
+            letter-spacing: 0.02em;
+            opacity: 0.95;
+        }
+        .clock .c-time {
+            font-size: 1.15em; /* 時刻（HH:MM:SS）を少し大きく */
+        }
         .progress-wrap {
             width: 98%;
-            height: 6px;
+            height: 10px;
+            padding: 2px 0;
+            box-sizing: border-box;
             background: rgba(255,255,255,0.22);
             border-radius: 999px;
             overflow: hidden;
@@ -89,9 +98,10 @@
             display: none;
         }
         .progress-bar {
-            height: 100%;
+            height: 6px;
             width: 100%;
             background: rgba(255,255,255,0.85);
+            border-radius: 999px;
 
             /* 右端を固定して、右→左に減る（空きが左に増える） */
             transform-origin: right center;

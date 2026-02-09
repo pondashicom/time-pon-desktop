@@ -45,7 +45,7 @@ function applyAppearance(overlay) {
 
     if (elClock) {
         elClock.style.fontFamily = fontFamily;
-        elClock.style.fontSize = `${Math.max(10, Math.floor(fontSizePx * 0.22))}px`;
+        elClock.style.fontSize = `${Math.max(10, Math.floor(fontSizePx * 0.27))}px`;
         elClock.style.color = color;
     }
 
@@ -93,7 +93,7 @@ function applyClockVisibility(enabled) {
 
     elClock.style.display = clockEnabled ? 'block' : 'none';
     if (clockEnabled) {
-        elClock.textContent = `現在時刻 ${nowToHMS()}`;
+        elClock.innerHTML = `<span class="c-label">現在時刻</span> <span class="c-time">${nowToHMS()}</span>`;
     }
 }
 
@@ -167,7 +167,7 @@ function handleTimerTick(t) {
     updateProgressFromTimer(t);
 
     if (clockEnabled && timerVisible && elClock) {
-        elClock.textContent = `現在時刻 ${nowToHMS()}`;
+        elClock.innerHTML = `<span class="c-label">現在時刻</span> <span class="c-time">${nowToHMS()}</span>`;
     }
 }
 
@@ -189,7 +189,7 @@ function init() {
     // 現在時刻は 1秒ごとに更新（表示がONのときだけ意味がある）
     setInterval(() => {
         if (!clockEnabled || !timerVisible || !elClock) return;
-        elClock.textContent = `現在時刻 ${nowToHMS()}`;
+        elClock.innerHTML = `<span class="c-label">現在時刻</span> <span class="c-time">${nowToHMS()}</span>`;
     }, 1000);
 
     // 起動直後に state:sync を取り逃した場合でも、保存状態を必ず反映する
