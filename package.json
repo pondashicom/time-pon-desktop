@@ -1,6 +1,8 @@
 {
     "name": "time-pon-desktop",
     "version": "1.0.1",
+    "description": "TIME-PON DESKTOP",
+    "author": "pondashicom",
     "main": "main.js",
     "private": true,
     "scripts": {
@@ -21,9 +23,14 @@
             "output": "dist"
         },
         "win": {
+            "icon": "assets/icons/icon.ico",
             "target": [
                 "nsis"
             ]
+        },
+        "nsis": {
+            "installerIcon": "assets/icons/icon.ico",
+            "uninstallerIcon": "assets/icons/icon.ico"
         }
     }
 }
