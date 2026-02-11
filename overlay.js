@@ -12,9 +12,11 @@ const elProgressWrap = document.getElementById('progressWrap');
 const elProgressBar = document.getElementById('progressBar');
 const elKanpe = document.getElementById('kanpe');
 
+
 // -----------------------
 //   共通関数
 // -----------------------
+
 function pad2(n) {
     const x = Math.floor(Math.abs(n));
     return (x < 10 ? '0' : '') + String(x);
@@ -188,6 +190,14 @@ function updateProgressFromTimer(t) {
 }
 
 // -----------------------
+//   カンペ点滅
+// -----------------------
+function applyKanpeBlink(enabled) {
+    if (!elKanpe) return;
+    elKanpe.classList.toggle('flashPulse', !!enabled);
+}
+
+// -----------------------
 //   IPC受信（Renderer API）
 // -----------------------
 
@@ -213,6 +223,9 @@ function handleStateSync(payload) {
     }
     if (payload && payload.overlay && typeof payload.overlay.kanpeText === 'string') {
         elKanpe.textContent = payload.overlay.kanpeText;
+    }
+    if (payload && payload.overlay) {
+        applyKanpeBlink(!!payload.overlay.kanpeBlink);
     }
 }
 

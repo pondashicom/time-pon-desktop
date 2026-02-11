@@ -120,7 +120,6 @@
             will-change: transform;
         }
         .kanpe {
-
             font-weight: 600;
             line-height: 1.2;
             font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -135,6 +134,17 @@
             max-width: 98%;
             word-break: break-word;
         }
+        .kanpe.flashPulse {
+            animation: kanpeFlashPulse 0.8s ease-in-out infinite;
+            will-change: filter, opacity;
+        }
+
+        @keyframes kanpeFlashPulse {
+            0%   { filter: none; opacity: 1; }
+            50%  { filter: brightness(1.8) contrast(1.15) saturate(1.1); opacity: 0.55; }
+            100% { filter: none; opacity: 1; }
+        }
+
     </style>
 
 </head>

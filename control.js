@@ -42,6 +42,7 @@ const btnToggleTimer = document.getElementById('btnToggleTimer');
 
 const btnSendKanpe = document.getElementById('btnSendKanpe');
 const btnClearKanpe = document.getElementById('btnClearKanpe');
+const btnKanpeBlink = document.getElementById('btnKanpeBlink');
 
 // -----------------------
 //   状態（Renderer側保持）
@@ -463,6 +464,12 @@ function applyOverlayToUI(overlay) {
         btnToggleTimer.textContent = visible ? 'タイマー非表示' : 'タイマー表示';
     }
 
+    // カンペ点滅トグル（OFF:「点滅ON」/ ON:「点滅OFF」）
+    if (btnKanpeBlink) {
+        const blinking = !!(currentOverlay && currentOverlay.kanpeBlink);
+        btnKanpeBlink.textContent = blinking ? '点滅OFF' : '点滅ON';
+    }
+
     // 表示場所（仮想表示）を更新
     updatePlacementMarker();
 
@@ -684,13 +691,27 @@ function registerUiEvents() {
 
     // カンペ
     btnSendKanpe.addEventListener('click', () => {
+        if (window.timepon.setKanpeBlink) {
+            window.timepon.setKanpeBlink(false);
+        }
         window.timepon.setKanpe(elKanpe.value || '');
     });
 
     btnClearKanpe.addEventListener('click', () => {
+        if (window.timepon.setKanpeBlink) {
+            window.timepon.setKanpeBlink(false);
+        }
         elKanpe.value = '';
         window.timepon.setKanpe('');
     });
+
+    // カンペ点滅（OFF: 点滅ON / ON: 点滅OFF）
+    if (btnKanpeBlink) {
+        btnKanpeBlink.addEventListener('click', () => {
+            const next = !(currentOverlay && currentOverlay.kanpeBlink);
+            window.timepon.setKanpeBlink(next);
+        });
+    }
 }
 
 // -----------------------

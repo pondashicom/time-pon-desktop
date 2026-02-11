@@ -130,6 +130,7 @@ const state = {
         fontFamily: 'Segoe UI, system-ui, -apple-system, sans-serif',
         fontSizePx: 120,
         color: '#FFFFFF',
+        kanpeBlink: false,
         kanpeText: ''
     }
 };
@@ -782,6 +783,13 @@ function registerIpc() {
 
         // 既存の購読先互換のため、kanpe:update も送る
         sendToWindows('kanpe:update', { text: state.overlay.kanpeText });
+    });
+
+    ipcMain.on('kanpe:blink', (evt, payload) => {
+        state.overlay.kanpeBlink = !!(payload && payload.enabled);
+
+        sendToWindows('state:sync', { overlay: { ...state.overlay } });
+        saveState();
     });
 }
 

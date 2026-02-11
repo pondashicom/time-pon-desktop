@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('timepon', {
     updateOverlay: (payload) => ipcRenderer.send('overlay:update', payload),
     setOverlayMoveMode: (enabled) => ipcRenderer.send('overlay:move-mode', { enabled: !!enabled }),
     setKanpe: (text) => ipcRenderer.send('kanpe:set', { text }),
+    setKanpeBlink: (enabled) => ipcRenderer.send('kanpe:blink', { enabled: !!enabled }),
 
     //   イベント購読（on）
     onStateSync: (cb) => ipcRenderer.on('state:sync', (_e, p) => cb(p)),
