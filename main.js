@@ -99,6 +99,8 @@ const state = {
     timer: {
         mode: 'down',                  // 'down' | 'up'
         downDisplayMode: 'hms',        // 'hms' | 'mss'（downのみ）
+        warn1Enabled: true,            // 第一警告 有効
+        warn2Enabled: true,            // 第二警告 有効
         warn1Min: 10,                  // 第一警告（分）
         warn2Min: 5,                   // 第二警告（分）
         warn1Color: '#FFE900',         // 第一警告色
@@ -548,6 +550,8 @@ function buildTimerPayload() {
     return {
         mode: state.timer.mode,
         downDisplayMode: state.timer.downDisplayMode,
+        warn1Enabled: state.timer.warn1Enabled,
+        warn2Enabled: state.timer.warn2Enabled,
         warn1Min: state.timer.warn1Min,
         warn2Min: state.timer.warn2Min,
         warn1Color: state.timer.warn1Color,
@@ -680,10 +684,21 @@ function registerIpc() {
         const warn1Color = isHex6(payload.warn1Color) ? payload.warn1Color.trim() : state.timer.warn1Color;
         const warn2Color = isHex6(payload.warn2Color) ? payload.warn2Color.trim() : state.timer.warn2Color;
 
+        let warn1Enabled = (typeof payload.warn1Enabled === 'boolean') ? payload.warn1Enabled : state.timer.warn1Enabled;
+        let warn2Enabled = (typeof payload.warn2Enabled === 'boolean') ? payload.warn2Enabled : state.timer.warn2Enabled;
+
+        // UPのときは警告を常に無効
+        if (mode === 'up') {
+            warn1Enabled = false;
+            warn2Enabled = false;
+        }
+
         state.timer.mode = mode;
         state.timer.startSeconds = startSeconds;
         state.timer.downDisplayMode = downDisplayMode;
 
+        state.timer.warn1Enabled = warn1Enabled;
+        state.timer.warn2Enabled = warn2Enabled;
         state.timer.warn1Min = warn1Min;
         state.timer.warn2Min = warn2Min;
         state.timer.warn1Color = warn1Color;

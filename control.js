@@ -13,6 +13,8 @@ const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
 const elDownDisplayMode = document.getElementById('downDisplayMode');
 
+const elWarn1Enabled = document.getElementById('warn1Enabled');
+const elWarn2Enabled = document.getElementById('warn2Enabled');
 const elWarn1Min = document.getElementById('warn1Min');
 const elWarn2Min = document.getElementById('warn2Min');
 const elWarn1Color = document.getElementById('warn1Color');
@@ -73,6 +75,16 @@ function computeTimerWarnColor(timer) {
     const base = baseControlTimerColor || '#ffffff';
     if (!timer || timer.mode !== 'down') return base;
 
+    const warn1Enabled = (typeof timer.warn1Enabled === 'boolean')
+        ? timer.warn1Enabled
+        : (elWarn1Enabled ? !!elWarn1Enabled.checked : true);
+
+    const warn2Enabled = (typeof timer.warn2Enabled === 'boolean')
+        ? timer.warn2Enabled
+        : (elWarn2Enabled ? !!elWarn2Enabled.checked : true);
+
+    if (!warn1Enabled && !warn2Enabled) return base;
+
     const cur = clampInt(timer.currentSeconds, 0, 24 * 3600 - 1);
 
     const w1Min = clampInt(timer.warn1Min, 0, 999);
@@ -87,8 +99,8 @@ function computeTimerWarnColor(timer) {
     const w1 = w1Min * 60;
     const w2 = w2Min * 60;
 
-    if (cur <= w2) return col2;
-    if (cur <= w1) return col1;
+    if (warn2Enabled && cur <= w2) return col2;
+    if (warn1Enabled && cur <= w1) return col1;
 
     return base;
 }
@@ -104,6 +116,13 @@ function applyTimerWarnColor(timer) {
 // state:sync のタイマー設定を UI に反映する（警告設定）
 function applyWarningSettingsToUI(timer) {
     if (!timer) return;
+
+    if (elWarn1Enabled && typeof timer.warn1Enabled === 'boolean') {
+        elWarn1Enabled.checked = timer.warn1Enabled;
+    }
+    if (elWarn2Enabled && typeof timer.warn2Enabled === 'boolean') {
+        elWarn2Enabled.checked = timer.warn2Enabled;
+    }
 
     if (elWarn1Min && Number.isFinite(timer.warn1Min)) {
         elWarn1Min.value = String(timer.warn1Min);
@@ -492,12 +511,33 @@ function registerUiEvents() {
         window.timepon.timerControl('reset');
     });
 
+    if (elMode) {
+        elMode.addEventListener('change', () => {
+            const mode = elMode.value === 'up' ? 'up' : 'down';
+            if (mode === 'up') {
+                if (elWarn1Enabled) elWarn1Enabled.checked = false;
+                if (elWarn2Enabled) elWarn2Enabled.checked = false;
+            }
+        });
+    }
+
     btnApplyTimer.addEventListener('click', () => {
         const mode = elMode.value === 'up' ? 'up' : 'down';
         const startMin = Math.max(0, parseInt(elStartMin.value || '0', 10));
         const startSeconds = startMin * 60;
 
         const downDisplayMode = (elDownDisplayMode && elDownDisplayMode.value === 'mss') ? 'mss' : 'hms';
+
+        // 有効フラグ（UPのときは強制OFF）
+        let warn1Enabled = (elWarn1Enabled && elWarn1Enabled.checked) ? true : false;
+        let warn2Enabled = (elWarn2Enabled && elWarn2Enabled.checked) ? true : false;
+
+        if (mode === 'up') {
+            warn1Enabled = false;
+            warn2Enabled = false;
+            if (elWarn1Enabled) elWarn1Enabled.checked = false;
+            if (elWarn2Enabled) elWarn2Enabled.checked = false;
+        }
 
         const warn1Min = Math.max(0, parseInt((elWarn1Min && elWarn1Min.value) ? elWarn1Min.value : '0', 10));
         const warn2Min = Math.max(0, parseInt((elWarn2Min && elWarn2Min.value) ? elWarn2Min.value : '0', 10));
@@ -509,6 +549,8 @@ function registerUiEvents() {
             mode,
             startSeconds,
             downDisplayMode,
+            warn1Enabled,
+            warn2Enabled,
             warn1Min,
             warn2Min,
             warn1Color,

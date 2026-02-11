@@ -45,9 +45,9 @@
                     </select>
                     <span class="small">※カウントダウン時のみ</span>
                 </div>
-
                 <div class="row">
                     <label>第一警告（分）</label>
+                    <input id="warn1Enabled" type="checkbox" checked>
                     <input id="warn1Min" type="number" min="0" max="999" step="1" value="10">
                     <input id="warn1Color" type="color" value="#FFE900">
                     <span class="small">※残りがこの分数以下で警告色に切替</span>
@@ -55,11 +55,11 @@
 
                 <div class="row">
                     <label>第二警告（分）</label>
+                    <input id="warn2Enabled" type="checkbox" checked>
                     <input id="warn2Min" type="number" min="0" max="999" step="1" value="5">
                     <input id="warn2Color" type="color" value="#F55700">
                     <span class="small">※残りがこの分数以下で強い警告色に切替</span>
                 </div>
-
                 <div class="row">
                     <label>現在時刻表示</label>
                     <input id="showClock" type="checkbox">

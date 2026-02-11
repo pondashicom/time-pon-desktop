@@ -49,6 +49,11 @@ function computeTimerWarnColor(timer) {
     const base = baseTimerColor || '#ffffff';
     if (!timer || timer.mode !== 'down') return base;
 
+    const warn1Enabled = (timer.warn1Enabled === true);
+    const warn2Enabled = (timer.warn2Enabled === true);
+
+    if (!warn1Enabled && !warn2Enabled) return base;
+
     const cur = clampInt(timer.currentSeconds, 0, 24 * 3600 - 1);
 
     const w1Min = clampInt(timer.warn1Min, 0, 999);
@@ -60,8 +65,8 @@ function computeTimerWarnColor(timer) {
     const w1 = w1Min * 60;
     const w2 = w2Min * 60;
 
-    if (cur <= w2) return col2;
-    if (cur <= w1) return col1;
+    if (warn2Enabled && cur <= w2) return col2;
+    if (warn1Enabled && cur <= w1) return col1;
 
     return base;
 }
