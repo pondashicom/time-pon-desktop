@@ -175,14 +175,53 @@ function updateProgressFromTimer(t) {
     const cur = t && Number.isFinite(t.currentSeconds) ? t.currentSeconds : 0;
 
     // カウントダウンのみ表示（開始値0は非表示）
+    // ※カウントアップ（mode=up）は意味がないので、プログレスバー自体を表示しない
     if (mode !== 'down' || start <= 0) {
         elProgressWrap.style.display = 'none';
         elProgressBar.style.transform = 'scaleX(1)';
         return;
     }
 
-    const ratio = Math.max(0, Math.min(1, cur / start));
+    // タイマーの設定時間超（cur<=0）は、プログレスバーを「全長」にする
+    const ratio = (cur <= 0)
+        ? 1
+        : Math.max(0, Math.min(1, cur / start));
+
     elProgressWrap.style.display = 'block';
+
+    // 背景（色分け）：バーはタイマーと同色 + 右側セグメントを警告色に
+    const base = computeTimerWarnColor(t);
+
+    const warn1Enabled = (t && t.warn1Enabled === true);
+    const warn2Enabled = (t && t.warn2Enabled === true);
+
+    const w1Min = clampInt(t ? t.warn1Min : 0, 0, 999);
+    const w2Min = clampInt(t ? t.warn2Min : 0, 0, 999);
+
+    const col1 = (t && isHex6(t.warn1Color)) ? t.warn1Color.trim() : '#FFE900';
+    const col2 = (t && isHex6(t.warn2Color)) ? t.warn2Color.trim() : '#F55700';
+
+    const w1 = w1Min * 60;
+    const w2 = w2Min * 60;
+
+    // 右端からの割合を、左→右の%位置に変換
+    const p1 = Math.max(0, Math.min(100, 100 - (start > 0 ? (w1 / start) * 100 : 0)));
+    const p2 = Math.max(0, Math.min(100, 100 - (start > 0 ? (w2 / start) * 100 : 0)));
+
+    if (!warn1Enabled && !warn2Enabled) {
+        elProgressBar.style.background = base;
+    } else if (warn1Enabled && !warn2Enabled) {
+        elProgressBar.style.background = `linear-gradient(to right, ${base} 0% ${p1}%, ${col1} ${p1}% 100%)`;
+    } else if (!warn1Enabled && warn2Enabled) {
+        elProgressBar.style.background = `linear-gradient(to right, ${base} 0% ${p2}%, ${col2} ${p2}% 100%)`;
+    } else {
+        // warn1 + warn2 両方有効（warn2 は常に右端側として優先）
+        if (p2 <= p1) {
+            elProgressBar.style.background = `linear-gradient(to right, ${base} 0% ${p2}%, ${col2} ${p2}% 100%)`;
+        } else {
+            elProgressBar.style.background = `linear-gradient(to right, ${base} 0% ${p1}%, ${col1} ${p1}% ${p2}%, ${col2} ${p2}% 100%)`;
+        }
+    }
 
     // 幅は固定(100%)、transform で「右→左に減る」表現
     elProgressBar.style.width = '100%';
