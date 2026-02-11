@@ -30,10 +30,54 @@ function nowToHMS() {
 // -----------------------
 
 // オーバレイの見た目（フォント/サイズ/色）を反映する
+let baseTimerColor = '#ffffff';
+
+// 数値を整数として範囲内に丸める
+function clampInt(n, min, max) {
+    const x = Number.isFinite(n) ? n : parseInt(n, 10);
+    if (!Number.isFinite(x)) return min;
+    return Math.max(min, Math.min(max, Math.floor(x)));
+}
+
+// #RRGGBB 形式の色か判定
+function isHex6(v) {
+    return (typeof v === 'string') && /^#[0-9a-fA-F]{6}$/.test(v.trim());
+}
+
+// タイマー状態から「警告時に適用する色」を算出する（通常時は baseTimerColor）
+function computeTimerWarnColor(timer) {
+    const base = baseTimerColor || '#ffffff';
+    if (!timer || timer.mode !== 'down') return base;
+
+    const cur = clampInt(timer.currentSeconds, 0, 24 * 3600 - 1);
+
+    const w1Min = clampInt(timer.warn1Min, 0, 999);
+    const w2Min = clampInt(timer.warn2Min, 0, 999);
+
+    const col1 = isHex6(timer.warn1Color) ? timer.warn1Color.trim() : '#FFE900';
+    const col2 = isHex6(timer.warn2Color) ? timer.warn2Color.trim() : '#F55700';
+
+    const w1 = w1Min * 60;
+    const w2 = w2Min * 60;
+
+    if (cur <= w2) return col2;
+    if (cur <= w1) return col1;
+
+    return base;
+}
+
+// タイマー表示（時刻）の色だけを警告に応じて上書きする
+function applyTimerWarnColor(timer) {
+    if (!elTimer) return;
+    elTimer.style.color = computeTimerWarnColor(timer);
+}
+
 function applyAppearance(overlay) {
     const fontFamily = overlay.fontFamily || 'Segoe UI, system-ui, -apple-system, sans-serif';
     const fontSizePx = overlay.fontSizePx || 120;
     const color = overlay.color || '#ffffff';
+
+    baseTimerColor = color;
 
     elTimer.style.fontFamily = fontFamily;
     elTimer.style.fontSize = `${fontSizePx}px`;
@@ -147,6 +191,7 @@ function handleStateSync(payload) {
             }
         }
         updateProgressFromTimer(payload.timer);
+        applyTimerWarnColor(payload.timer);
     }
     if (payload && payload.overlay && typeof payload.overlay.kanpeText === 'string') {
         elKanpe.textContent = payload.overlay.kanpeText;
@@ -165,6 +210,7 @@ function handleTimerTick(t) {
         }
     }
     updateProgressFromTimer(t);
+    applyTimerWarnColor(t);
 
     if (clockEnabled && timerVisible && elClock) {
         elClock.innerHTML = `<span class="c-label">現在時刻</span> <span class="c-time">${nowToHMS()}</span>`;

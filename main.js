@@ -99,6 +99,10 @@ const state = {
     timer: {
         mode: 'down',                  // 'down' | 'up'
         downDisplayMode: 'hms',        // 'hms' | 'mss'（downのみ）
+        warn1Min: 10,                  // 第一警告（分）
+        warn2Min: 5,                   // 第二警告（分）
+        warn1Color: '#FFE900',         // 第一警告色
+        warn2Color: '#F55700',         // 第二警告色
         startSeconds: 5 * 60,          // 設定値（開始値）
         currentSecondsPrecise: 5 * 60, // 内部保持（小数OK）
         currentSeconds: 5 * 60,        // 表示用（整数）
@@ -544,6 +548,10 @@ function buildTimerPayload() {
     return {
         mode: state.timer.mode,
         downDisplayMode: state.timer.downDisplayMode,
+        warn1Min: state.timer.warn1Min,
+        warn2Min: state.timer.warn2Min,
+        warn1Color: state.timer.warn1Color,
+        warn2Color: state.timer.warn2Color,
         startSeconds: state.timer.startSeconds,
         currentSeconds: state.timer.currentSeconds,
         running: state.timer.running,
@@ -665,9 +673,21 @@ function registerIpc() {
         const startSeconds = clampInt(payload.startSeconds, 0, 24 * 3600 - 1);
         const downDisplayMode = (payload.downDisplayMode === 'mss') ? 'mss' : 'hms';
 
+        const isHex6 = (v) => (typeof v === 'string') && /^#[0-9a-fA-F]{6}$/.test(v.trim());
+
+        const warn1Min = clampInt(payload.warn1Min, 0, 999);
+        const warn2Min = clampInt(payload.warn2Min, 0, 999);
+        const warn1Color = isHex6(payload.warn1Color) ? payload.warn1Color.trim() : state.timer.warn1Color;
+        const warn2Color = isHex6(payload.warn2Color) ? payload.warn2Color.trim() : state.timer.warn2Color;
+
         state.timer.mode = mode;
         state.timer.startSeconds = startSeconds;
         state.timer.downDisplayMode = downDisplayMode;
+
+        state.timer.warn1Min = warn1Min;
+        state.timer.warn2Min = warn2Min;
+        state.timer.warn1Color = warn1Color;
+        state.timer.warn2Color = warn2Color;
 
         // 実行中でなければ表示も合わせてリセット
         if (!state.timer.running) {

@@ -13,6 +13,11 @@ const elMode = document.getElementById('mode');
 const elStartMin = document.getElementById('startMin');
 const elDownDisplayMode = document.getElementById('downDisplayMode');
 
+const elWarn1Min = document.getElementById('warn1Min');
+const elWarn2Min = document.getElementById('warn2Min');
+const elWarn1Color = document.getElementById('warn1Color');
+const elWarn2Color = document.getElementById('warn2Color');
+
 const elDisplaySelect = document.getElementById('displaySelect');
 
 const elPlacementArea = document.getElementById('placementArea');
@@ -49,15 +54,87 @@ let displays = [];
 // -----------------------
 
 // コントローラー側の表示色もOverlayと同じにする（タイマー表示＋カンペ入力欄）
+let baseControlTimerColor = '#ffffff';
+
+// 数値を整数として範囲内に丸める
+function clampInt(n, min, max) {
+    const x = Number.isFinite(n) ? n : parseInt(n, 10);
+    if (!Number.isFinite(x)) return min;
+    return Math.max(min, Math.min(max, Math.floor(x)));
+}
+
+// #RRGGBB 形式の色か判定
+function isHex6(v) {
+    return (typeof v === 'string') && /^#[0-9a-fA-F]{6}$/.test(v.trim());
+}
+
+// タイマー状態から「警告時に適用する色」を算出する（通常時は baseControlTimerColor）
+function computeTimerWarnColor(timer) {
+    const base = baseControlTimerColor || '#ffffff';
+    if (!timer || timer.mode !== 'down') return base;
+
+    const cur = clampInt(timer.currentSeconds, 0, 24 * 3600 - 1);
+
+    const w1Min = clampInt(timer.warn1Min, 0, 999);
+    const w2Min = clampInt(timer.warn2Min, 0, 999);
+
+    const col1 = isHex6(timer.warn1Color) ? timer.warn1Color.trim()
+        : (elWarn1Color && isHex6(elWarn1Color.value) ? elWarn1Color.value.trim() : '#FFE900');
+
+    const col2 = isHex6(timer.warn2Color) ? timer.warn2Color.trim()
+        : (elWarn2Color && isHex6(elWarn2Color.value) ? elWarn2Color.value.trim() : '#F55700');
+
+    const w1 = w1Min * 60;
+    const w2 = w2Min * 60;
+
+    if (cur <= w2) return col2;
+    if (cur <= w1) return col1;
+
+    return base;
+}
+
+// タイマー表示（時刻）の色だけを警告に応じて上書きする
+function applyTimerWarnColor(timer) {
+    if (!elTime) return;
+
+    const c = computeTimerWarnColor(timer);
+    elTime.style.color = c;
+}
+
+// state:sync のタイマー設定を UI に反映する（警告設定）
+function applyWarningSettingsToUI(timer) {
+    if (!timer) return;
+
+    if (elWarn1Min && Number.isFinite(timer.warn1Min)) {
+        elWarn1Min.value = String(timer.warn1Min);
+    }
+    if (elWarn2Min && Number.isFinite(timer.warn2Min)) {
+        elWarn2Min.value = String(timer.warn2Min);
+    }
+
+    if (elWarn1Color && isHex6(timer.warn1Color)) {
+        elWarn1Color.value = timer.warn1Color.trim();
+    }
+    if (elWarn2Color && isHex6(timer.warn2Color)) {
+        elWarn2Color.value = timer.warn2Color.trim();
+    }
+}
+
+// コントローラー側の表示色もOverlayと同じにする（タイマー表示＋カンペ入力欄）
 function applyControlColor(color) {
     const c = (typeof color === 'string' && color.trim() !== '') ? color : '#ffffff';
 
+    baseControlTimerColor = c;
+
+    // タイマーは「警告色」で上書きする可能性があるため、まず base を当てる
     if (elTime) {
         elTime.style.color = c;
     }
     if (elKanpe) {
         elKanpe.style.color = c;
     }
+
+    applyTimerWarnColor(currentTimer);
 }
 
 // タイマー状態に応じてボタンの有効/無効を更新する
@@ -284,6 +361,8 @@ function applyTimerToUI(timer) {
         elTime.textContent = timer.timeText || '00:00:00';
     }
 
+    applyTimerWarnColor(timer);
+
     updateButtons();
     updateBlinking(timer);
 }
@@ -365,6 +444,7 @@ function refreshUIFromState(payload) {
     if (!payload) return;
 
     if (payload.timer) {
+        applyWarningSettingsToUI(payload.timer);
         applyTimerToUI(payload.timer);
     }
     if (payload.overlay) {
@@ -419,10 +499,20 @@ function registerUiEvents() {
 
         const downDisplayMode = (elDownDisplayMode && elDownDisplayMode.value === 'mss') ? 'mss' : 'hms';
 
+        const warn1Min = Math.max(0, parseInt((elWarn1Min && elWarn1Min.value) ? elWarn1Min.value : '0', 10));
+        const warn2Min = Math.max(0, parseInt((elWarn2Min && elWarn2Min.value) ? elWarn2Min.value : '0', 10));
+
+        const warn1Color = (elWarn1Color && elWarn1Color.value) ? elWarn1Color.value : '#FFE900';
+        const warn2Color = (elWarn2Color && elWarn2Color.value) ? elWarn2Color.value : '#F55700';
+
         window.timepon.setTimer({
             mode,
             startSeconds,
-            downDisplayMode
+            downDisplayMode,
+            warn1Min,
+            warn2Min,
+            warn1Color,
+            warn2Color
         });
     });
 

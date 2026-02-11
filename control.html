@@ -23,8 +23,7 @@
                         <button id="btnReset" class="btn">Reset</button>
                     </div>
                 </div>
-
-            <div class="card">
+<div class="card">
                 <div class="card-title">タイマー設定</div>
                 <div class="row">
                     <label>モード</label>
@@ -45,6 +44,26 @@
                         <option value="mss">残りMMM分SS秒モード</option>
                     </select>
                     <span class="small">※カウントダウン時のみ</span>
+                </div>
+
+                <div class="row">
+                    <label>第一警告（分）</label>
+                    <input id="warn1Min" type="number" min="0" max="999" step="1" value="10">
+                    <input id="warn1Color" type="color" value="#FFE900">
+                    <span class="small">※残りがこの分数以下で警告色に切替</span>
+                </div>
+
+                <div class="row">
+                    <label>第二警告（分）</label>
+                    <input id="warn2Min" type="number" min="0" max="999" step="1" value="5">
+                    <input id="warn2Color" type="color" value="#F55700">
+                    <span class="small">※残りがこの分数以下で強い警告色に切替</span>
+                </div>
+
+                <div class="row">
+                    <label>現在時刻表示</label>
+                    <input id="showClock" type="checkbox">
+                    <span class="small">タイマー下に「現在時刻 HH:MM:SS」を表示</span>
                 </div>
                 <div class="row">
                     <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
@@ -94,11 +113,6 @@
                 <div class="row">
                     <label>色</label>
                     <input id="color" type="color" value="#ffffff">
-                </div>
-                <div class="row">
-                    <label>現在時刻表示</label>
-                    <input id="showClock" type="checkbox">
-                    <span class="small">タイマー下に「現在時刻 HH:MM:SS」を表示</span>
                 </div>
                 <div class="row">
                     <label>表示先ディスプレイ</label>
