@@ -65,6 +65,17 @@
         .timer .t-num {
             font-size: 1em;
         }
+        @keyframes overrunFlash {
+            0%, 100% {
+                opacity: 1.00;
+            }
+            50% {
+                opacity: 0.55;
+            }
+        }
+        .timer.overrun {
+            animation: overrunFlash 1.0s infinite;
+        }
         .clock {
             font-weight: 600;
             line-height: 1.0;

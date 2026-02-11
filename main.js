@@ -43,29 +43,35 @@ function pad3(n) {
 
 // 秒数を HH:MM:SS に変換する
 function secondsToHMS(sec) {
-    const s = Math.max(0, Math.floor(sec));
+    const neg = (sec < 0);
+    const s = Math.abs(Math.floor(sec));
     const hh = Math.floor(s / 3600);
     const mm = Math.floor((s % 3600) / 60);
     const ss = s % 60;
-    return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+    const body = `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+    return neg ? `-${body}` : body;
 }
 
 // 秒数を MMM:SS（分が59を超えてもOK）に変換する
 function secondsToMSS(sec) {
-    const s = Math.max(0, Math.floor(sec));
+    const neg = (sec < 0);
+    const s = Math.abs(Math.floor(sec));
     const mm = Math.floor(s / 60);
     const ss = s % 60;
 
     // 残りMMM分SS秒（分がM/MMのときは0プレフィックスなし）
-    return `残り${mm}分${pad2(ss)}秒`;
+    const sign = neg ? '-' : '';
+    return `残り${sign}${mm}分${pad2(ss)}秒`;
 }
 
 function secondsToMSSHtml(sec) {
-    const s = Math.max(0, Math.floor(sec));
+    const neg = (sec < 0);
+    const s = Math.abs(Math.floor(sec));
     const mm = Math.floor(s / 60);
     const ss = s % 60;
 
-    const mmStr = String(mm);
+    const sign = neg ? '-' : '';
+    const mmStr = `${sign}${mm}`;
     const ssStr = pad2(ss);
 
     // 「残り/分/秒」を小さく見せるためspanを付ける
@@ -634,16 +640,10 @@ function timerTick() {
     } else {
         state.timer.currentSecondsPrecise -= dt;
 
-        if (state.timer.currentSecondsPrecise <= 0) {
-            state.timer.currentSecondsPrecise = 0;
-            state.timer.currentSeconds = 0;
-            timerStop();
-        } else {
-            // カウントダウンは「残り」なので ceil（1秒経つまで表示が変わらない）
-            state.timer.currentSeconds = Math.max(0, Math.ceil(state.timer.currentSecondsPrecise));
-        }
+        // 0を過ぎても止めずにマイナスで進める（警告表示は renderer 側）
+        // カウントダウンは「残り」なので ceil（1秒経つまで表示が変わらない）
+        state.timer.currentSeconds = Math.ceil(state.timer.currentSecondsPrecise);
     }
-
     sendToWindows('timer:tick', buildTimerPayload());
 }
 

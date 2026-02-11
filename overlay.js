@@ -49,12 +49,17 @@ function computeTimerWarnColor(timer) {
     const base = baseTimerColor || '#ffffff';
     if (!timer || timer.mode !== 'down') return base;
 
+    const curRaw = (Number.isFinite(timer.currentSeconds) ? timer.currentSeconds : 0);
+
+    // 0以下は常に「時間切れ」警告色（warn1/2 のON/OFFに関係なく）
+    if (curRaw <= 0) return '#FF3B30';
+
     const warn1Enabled = (timer.warn1Enabled === true);
     const warn2Enabled = (timer.warn2Enabled === true);
 
     if (!warn1Enabled && !warn2Enabled) return base;
 
-    const cur = clampInt(timer.currentSeconds, 0, 24 * 3600 - 1);
+    const cur = clampInt(curRaw, 0, 24 * 3600 - 1);
 
     const w1Min = clampInt(timer.warn1Min, 0, 999);
     const w2Min = clampInt(timer.warn2Min, 0, 999);
@@ -74,7 +79,15 @@ function computeTimerWarnColor(timer) {
 // タイマー表示（時刻）の色だけを警告に応じて上書きする
 function applyTimerWarnColor(timer) {
     if (!elTimer) return;
+
     elTimer.style.color = computeTimerWarnColor(timer);
+
+    const isOverrun = !!timer
+        && timer.mode === 'down'
+        && Number.isFinite(timer.currentSeconds)
+        && timer.currentSeconds <= 0;
+
+    elTimer.classList.toggle('overrun', isOverrun);
 }
 
 function applyAppearance(overlay) {

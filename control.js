@@ -75,6 +75,11 @@ function computeTimerWarnColor(timer) {
     const base = baseControlTimerColor || '#ffffff';
     if (!timer || timer.mode !== 'down') return base;
 
+    const curRaw = (Number.isFinite(timer.currentSeconds) ? timer.currentSeconds : 0);
+
+    // 0以下は常に「時間切れ」警告色（warn1/2 のON/OFFに関係なく）
+    if (curRaw <= 0) return '#FF3B30';
+
     const warn1Enabled = (typeof timer.warn1Enabled === 'boolean')
         ? timer.warn1Enabled
         : (elWarn1Enabled ? !!elWarn1Enabled.checked : true);
@@ -85,7 +90,7 @@ function computeTimerWarnColor(timer) {
 
     if (!warn1Enabled && !warn2Enabled) return base;
 
-    const cur = clampInt(timer.currentSeconds, 0, 24 * 3600 - 1);
+    const cur = clampInt(curRaw, 0, 24 * 3600 - 1);
 
     const w1Min = clampInt(timer.warn1Min, 0, 999);
     const w2Min = clampInt(timer.warn2Min, 0, 999);
@@ -111,6 +116,13 @@ function applyTimerWarnColor(timer) {
 
     const c = computeTimerWarnColor(timer);
     elTime.style.color = c;
+
+    const isOverrun = !!timer
+        && timer.mode === 'down'
+        && Number.isFinite(timer.currentSeconds)
+        && timer.currentSeconds <= 0;
+
+    elTime.classList.toggle('overrun', isOverrun);
 }
 
 // state:sync のタイマー設定を UI に反映する（警告設定）

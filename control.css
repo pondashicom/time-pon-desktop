@@ -182,6 +182,19 @@ label {
     }
 }
 
+@keyframes overrunFlash {
+    0%, 100% {
+        opacity: 1.00;
+    }
+    50% {
+        opacity: 0.55;
+    }
+}
+
+.time.overrun {
+    animation: overrunFlash 1.0s infinite;
+}
+
 .btn.blink-running {
     animation: neonPulseOrange 1.6s infinite;
     border-color: rgba(255, 170, 45, 0.40);
