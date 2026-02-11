@@ -1,12 +1,29 @@
 {
     "name": "time-pon-desktop",
-    "version": "0.1.0",
+    "version": "1.0.1",
     "main": "main.js",
     "private": true,
     "scripts": {
-        "start": "electron ."
+        "start": "electron .",
+        "build": "electron-builder"
     },
     "devDependencies": {
-        "electron": "^30.0.0"
+        "electron": "^30.0.0",
+        "electron-builder": "^24.13.3"
+    },
+    "build": {
+        "appId": "com.pondashicom.timepon",
+        "productName": "TIME-PON DESKTOP",
+        "files": [
+            "**/*"
+        ],
+        "directories": {
+            "output": "dist"
+        },
+        "win": {
+            "target": [
+                "nsis"
+            ]
+        }
     }
 }
