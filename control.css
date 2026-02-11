@@ -225,6 +225,17 @@ textarea {
     outline: none;
 }
 
+/* カンペ入力欄：初期は1行相当に低く、必要なら縦に伸ばせる（可変） */
+#kanpeText {
+    height: 34px;
+    min-height: 34px;
+    resize: vertical;
+}
+
+select {
+    min-width: 170px;
+}
+
 select {
     min-width: 170px;
 }

@@ -43,14 +43,12 @@
                         <option value="hms">HH:MM:SSモード</option>
                         <option value="mss">残りMMM分SS秒モード</option>
                     </select>
-                    <span class="small">※カウントダウン時のみ</span>
                 </div>
                 <div class="row">
                     <label>第一警告（分）</label>
                     <input id="warn1Enabled" type="checkbox" checked>
                     <input id="warn1Min" type="number" min="0" max="999" step="1" value="10">
                     <input id="warn1Color" type="color" value="#FFE900">
-                    <span class="small">※残りがこの分数以下で警告色に切替</span>
                 </div>
 
                 <div class="row">
@@ -58,12 +56,10 @@
                     <input id="warn2Enabled" type="checkbox" checked>
                     <input id="warn2Min" type="number" min="0" max="999" step="1" value="5">
                     <input id="warn2Color" type="color" value="#F55700">
-                    <span class="small">※残りがこの分数以下で強い警告色に切替</span>
                 </div>
                 <div class="row">
                     <label>現在時刻表示</label>
                     <input id="showClock" type="checkbox">
-                    <span class="small">タイマー下に「現在時刻 HH:MM:SS」を表示</span>
                 </div>
                 <div class="row">
                     <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
@@ -73,7 +69,7 @@
 
             <div class="card">
                 <div class="card-title">カンペ</div>
-                <textarea id="kanpeText" placeholder="ここに入力したテキストが Overlay に表示されます"></textarea>
+                <textarea id="kanpeText" rows="1" placeholder="ここに入力したテキストが Overlay に表示されます"></textarea>
                 <div class="row">
                     <button id="btnSendKanpe" class="btn">送信</button>
                     <button id="btnClearKanpe" class="btn">クリア</button>
@@ -89,7 +85,6 @@
                         <div id="placementArea" class="placement-area">
                             <div id="placementMarker" class="placement-marker" title="ドラッグして位置変更"></div>
                         </div>
-                        <div class="hint">※ドラッグでOverlayの位置（左上）を変更します（16:9の仮想表示）</div>
                     </div>
                 </div>
 
@@ -109,7 +104,6 @@
                     <button id="btnFontDec" class="btn" type="button">-</button>
                     <button id="btnFontInc" class="btn" type="button">+</button>
                     <input id="fontSize" type="hidden" value="120">
-                    <span class="small">※即時反映</span>
                 </div>
                 <div class="row">
                     <label>色</label>
