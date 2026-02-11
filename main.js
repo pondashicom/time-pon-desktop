@@ -574,26 +574,13 @@ function buildTimerPayload() {
 
 // タイマーを開始値リセット
 function timerResetToStart() {
-    const wasRunning = !!state.timer.running;
-    const wasPaused = !!state.timer.paused;
-
     state.timer.currentSecondsPrecise = state.timer.startSeconds;
     state.timer.currentSeconds = state.timer.startSeconds;
 
-    // リセット後の状態は「リセットボタンを押した瞬間の状態」を維持する
-    // - 実行中: リセット後すぐ再開（running=true, paused=false）
-    // - 一時停止: リセット後も一時停止（running=true, paused=true）
-    // - 停止: リセット後も停止（running=false, paused=false）
-    if (!wasRunning) {
-        state.timer.running = false;
-        state.timer.paused = false;
-        state.timer.lastTickMs = null;
-        return;
-    }
-
-    state.timer.running = true;
-    state.timer.paused = wasPaused;
-    state.timer.lastTickMs = wasPaused ? null : Date.now();
+    // Reset は常に「停止（ストップ）」にする（点滅なし）
+    state.timer.running = false;
+    state.timer.paused = false;
+    state.timer.lastTickMs = null;
 }
 
 // タイマーを開始（再開）
@@ -705,10 +692,24 @@ function registerIpc() {
         state.timer.warn1Color = warn1Color;
         state.timer.warn2Color = warn2Color;
 
-        // 実行中でなければ表示も合わせてリセット
-        if (!state.timer.running) {
-            state.timer.currentSecondsPrecise = startSeconds;
-            state.timer.currentSeconds = startSeconds;
+        // 「設定を反映」は実行中/一時停止/停止のいずれでも即時反映する
+        // - 実行中: 設定分数に戻して秒=0の状態から継続（running=true, paused=false）
+        // - 一時停止: 設定分数に戻して秒=0の状態で一時停止維持（running=true, paused=true）
+        // - 停止: 設定分数に戻して停止維持（running=false, paused=false）
+        const wasRunning = !!state.timer.running;
+        const wasPaused = !!state.timer.paused;
+
+        state.timer.currentSecondsPrecise = startSeconds;
+        state.timer.currentSeconds = startSeconds;
+
+        if (!wasRunning) {
+            state.timer.running = false;
+            state.timer.paused = false;
+            state.timer.lastTickMs = null;
+        } else {
+            state.timer.running = true;
+            state.timer.paused = wasPaused;
+            state.timer.lastTickMs = wasPaused ? null : Date.now();
         }
 
         // モード切替（up/down）で必要な高さが変わるため、Overlay側も反映
@@ -716,6 +717,47 @@ function registerIpc() {
 
         sendToWindows('timer:tick', buildTimerPayload());
         saveState();
+    });
+
+    // 設定だけを更新（現在の秒数はリセットしない）
+    ipcMain.on('timer:update', (evt, payload) => {
+        if (!payload || typeof payload !== 'object') return;
+
+        const mode = (payload.mode === 'up') ? 'up' : (payload.mode === 'down' ? 'down' : state.timer.mode);
+        const downDisplayMode = (payload.downDisplayMode === 'mss') ? 'mss' : (payload.downDisplayMode === 'hms' ? 'hms' : state.timer.downDisplayMode);
+
+        const isHex6 = (v) => (typeof v === 'string') && /^#[0-9a-fA-F]{6}$/.test(v.trim());
+
+        const warn1Min = ('warn1Min' in payload) ? clampInt(payload.warn1Min, 0, 999) : state.timer.warn1Min;
+        const warn2Min = ('warn2Min' in payload) ? clampInt(payload.warn2Min, 0, 999) : state.timer.warn2Min;
+
+        const warn1Color = (('warn1Color' in payload) && isHex6(payload.warn1Color)) ? payload.warn1Color.trim() : state.timer.warn1Color;
+        const warn2Color = (('warn2Color' in payload) && isHex6(payload.warn2Color)) ? payload.warn2Color.trim() : state.timer.warn2Color;
+
+        let warn1Enabled = (('warn1Enabled' in payload) && typeof payload.warn1Enabled === 'boolean') ? payload.warn1Enabled : state.timer.warn1Enabled;
+        let warn2Enabled = (('warn2Enabled' in payload) && typeof payload.warn2Enabled === 'boolean') ? payload.warn2Enabled : state.timer.warn2Enabled;
+
+        // UPのときは警告を常に無効
+        if (mode === 'up') {
+            warn1Enabled = false;
+            warn2Enabled = false;
+        }
+
+        state.timer.mode = mode;
+        state.timer.downDisplayMode = downDisplayMode;
+
+        state.timer.warn1Enabled = warn1Enabled;
+        state.timer.warn2Enabled = warn2Enabled;
+        state.timer.warn1Min = warn1Min;
+        state.timer.warn2Min = warn2Min;
+        state.timer.warn1Color = warn1Color;
+        state.timer.warn2Color = warn2Color;
+
+        // 表示形式/モード変更でOverlayサイズが変わるため同期
+        applyOverlaySettingsAndBroadcast();
+
+        // 表示（timeText/timeHtml）も更新
+        sendToWindows('timer:tick', buildTimerPayload());
     });
 
     ipcMain.on('timer:control', (evt, payload) => {

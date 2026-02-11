@@ -461,7 +461,7 @@ function applyOverlayToUI(overlay) {
     // タイマー表示トグル（表示中:「非表示」/ 非表示中:「表示」）
     if (btnToggleTimer) {
         const visible = !currentOverlay || currentOverlay.showTimer !== false;
-        btnToggleTimer.textContent = visible ? 'タイマー非表示' : 'タイマー表示';
+        btnToggleTimer.textContent = visible ? '非表示' : '表示';
     }
 
     // カンペ点滅トグル（OFF:「点滅ON」/ ON:「点滅OFF」）
@@ -530,21 +530,8 @@ function registerUiEvents() {
         window.timepon.timerControl('reset');
     });
 
-    if (elMode) {
-        elMode.addEventListener('change', () => {
-            const mode = elMode.value === 'up' ? 'up' : 'down';
-            if (mode === 'up') {
-                if (elWarn1Enabled) elWarn1Enabled.checked = false;
-                if (elWarn2Enabled) elWarn2Enabled.checked = false;
-            }
-        });
-    }
-
-    btnApplyTimer.addEventListener('click', () => {
+    const buildTimerConfigFromUI = () => {
         const mode = elMode.value === 'up' ? 'up' : 'down';
-        const startMin = Math.max(0, parseInt(elStartMin.value || '0', 10));
-        const startSeconds = startMin * 60;
-
         const downDisplayMode = (elDownDisplayMode && elDownDisplayMode.value === 'mss') ? 'mss' : 'hms';
 
         // 有効フラグ（UPのときは強制OFF）
@@ -564,9 +551,8 @@ function registerUiEvents() {
         const warn1Color = (elWarn1Color && elWarn1Color.value) ? elWarn1Color.value : '#FFE900';
         const warn2Color = (elWarn2Color && elWarn2Color.value) ? elWarn2Color.value : '#F55700';
 
-        window.timepon.setTimer({
+        return {
             mode,
-            startSeconds,
             downDisplayMode,
             warn1Enabled,
             warn2Enabled,
@@ -574,9 +560,51 @@ function registerUiEvents() {
             warn2Min,
             warn1Color,
             warn2Color
+        };
+    };
+
+    const updateTimerConfigImmediate = () => {
+        if (!window.timepon.updateTimer) return;
+        window.timepon.updateTimer(buildTimerConfigFromUI());
+    };
+
+    // モード変更：即時
+    if (elMode) {
+        elMode.addEventListener('change', () => {
+            updateTimerConfigImmediate();
+        });
+    }
+
+    // 表示形式：即時
+    if (elDownDisplayMode) {
+        elDownDisplayMode.addEventListener('change', () => {
+            updateTimerConfigImmediate();
+        });
+    }
+
+    // 第一/第二警告：即時
+    if (elWarn1Enabled) elWarn1Enabled.addEventListener('change', updateTimerConfigImmediate);
+    if (elWarn1Min) elWarn1Min.addEventListener('change', updateTimerConfigImmediate);
+    if (elWarn1Color) elWarn1Color.addEventListener('change', updateTimerConfigImmediate);
+
+    if (elWarn2Enabled) elWarn2Enabled.addEventListener('change', updateTimerConfigImmediate);
+    if (elWarn2Min) elWarn2Min.addEventListener('change', updateTimerConfigImmediate);
+    if (elWarn2Color) elWarn2Color.addEventListener('change', updateTimerConfigImmediate);
+
+    // 開始値だけ「設定を反映」
+    btnApplyTimer.addEventListener('click', () => {
+        const startMin = Math.max(0, parseInt(elStartMin.value || '0', 10));
+        const startSeconds = startMin * 60;
+
+        const cfg = buildTimerConfigFromUI();
+
+        window.timepon.setTimer({
+            ...cfg,
+            startSeconds
         });
     });
 
+    // タイマー表示/非表示（リセット横へ移設済み）
     if (btnToggleTimer) {
         btnToggleTimer.addEventListener('click', () => {
             const visible = !currentOverlay || currentOverlay.showTimer !== false;

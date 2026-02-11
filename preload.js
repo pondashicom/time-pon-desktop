@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('timepon', {
 
     //   タイマー操作（send）
     setTimer: (payload) => ipcRenderer.send('timer:set', payload),
+    updateTimer: (payload) => ipcRenderer.send('timer:update', payload),
     timerControl: (action) => ipcRenderer.send('timer:control', { action }),
 
     //   オーバレイ/カンペ操作（send）

@@ -18,12 +18,13 @@
                         <div class="time" id="timeText">00:00:00</div>
                     </div>
                     <div class="btnbar">
-                        <button id="btnStart" class="btn">Start</button>
-                        <button id="btnPause" class="btn">Pause</button>
-                        <button id="btnReset" class="btn">Reset</button>
+                        <button id="btnStart" class="btn">スタート</button>
+                        <button id="btnPause" class="btn">一時停止</button>
+                        <button id="btnReset" class="btn">リセット</button>
+                        <button id="btnToggleTimer" class="btn">非表示</button>
                     </div>
                 </div>
-<div class="card">
+                <div class="card">
                 <div class="card-title">タイマー設定</div>
                 <div class="row">
                     <label>モード</label>
@@ -35,7 +36,7 @@
                 <div class="row">
                     <label>開始値（分）</label>
                     <input id="startMin" type="number" min="0" max="999" step="1" value="5">
-                    <span class="small">※秒は 0 固定（最小実装）</span>
+                    <button id="btnApplyTimer" class="btn">設定を反映</button>
                 </div>
                 <div class="row">
                     <label>表示形式（DOWN）</label>
@@ -61,11 +62,8 @@
                     <label>現在時刻表示</label>
                     <input id="showClock" type="checkbox">
                 </div>
-                <div class="row">
-                    <button id="btnApplyTimer" class="btn btn-wide">設定を反映</button>
-                    <button id="btnToggleTimer" class="btn">タイマーを非表示</button>
-                </div>
             </div>
+
 
             <div class="card">
                 <div class="card-title">カンペ</div>
