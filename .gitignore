@@ -1,6 +1,7 @@
 node_modules/
 dist/
 out/
+readme/
 *.log
 
 .DS_Store
